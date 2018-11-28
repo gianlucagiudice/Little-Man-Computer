@@ -1,0 +1,53 @@
+Add 3
+add Ciao
+ciao hlt
+Ciao
+Come
+Stai
+
+add casa
+
+Riga 0
+LABEL_ONE ADD 4                           // LABEL_ONE = 1
+LABEL_TEST SUB LABEL_ONE                  // LABEL_TEST SUB 1
+LABEL_TEST LABEL_ANOTHER SUB LABEL_ONE    // NO
+
+Label{0,1} Istruzione (Numero|Label|"")    => YES
+Label{1,}  Istruzione (Numero|Label|"")    => NO
+
+undefined(one, 2)
+undefined(one, 3)
+undefined(one, 5)
+
+define(one, 8)
+
+
+[500, 902, [2, ONE], 3                                , ...].
+
+undefined(one, X).
+
+
+label add 14
+
+
+reserved(X) :- X = 'ADD';
+
+
+
+validate([X, Y]) :-
+    instruction(X), instruction(Y), format("ERRORE ~n"), fail.
+
+validate([X Y]):-
+    instruction(X),
+
+validate([X Y]):-
+    instruction(Y).
+
+validate([X, Y, Z]) :-
+    label(X),
+    instruction(Y, Z),
+    label(Z), !.
+
+validate([X, Y, Z]) :-
+    label(X),
+    instruction(Y, Z), !.
