@@ -39,6 +39,7 @@ instruction(lda, 5, _).
 instruction(bra, 6, _).
 instruction(brz, 7, _).
 instruction(brp, 8, _).
+instruction(dat, 0, _).
 instruction(dat, 0).
 instruction(inp, 901).
 instruction(out, 902).
@@ -86,8 +87,6 @@ Devo guardare la lunghezza delle liste relative alle righe:
 
 
 %%% evaluate_line/3: Given a list of string codes, get the first line
-evaluate_line([C | Codes, Line, Rest) :-
-    fail.
 
 is_white(C) :- char_type(C, white).
 
@@ -109,25 +108,40 @@ parse_command(Command, CommandList) :-
     fail.
 */
 
-%%% assembler_to_machineCode/2: Convert assembler program into machine code.
-assembler_to_machineCode(File_codes, Row, [MachineCode_line | Mem]) :-
+%%% assembler/2: Convert assembly program into machine code.
+assembler([Row | Rest_file], Pointer_row, [MachineCode_line | Mem]) :-
+    fail.
+    /*
+    % Split the ro into a list of strings
+    split_string("a \tb  \t\t  \tu \t\t\t\t\t\t   c  \t   d", "\t ", " \t", L).
+
     % Get the codes of a single line
     evaluate_line(File_codes, Line_codes, Rest_file_codes),
-    % Parse the codes and return a list of atoms
+    % Parse the string list and return a list of atoms
     pasre_line(Line_codes, Line_list),
     % Convert single line list into machine code
     line_to_machineCode(Line_list, MachineCode_line),
     New_row is Row + 1,
     assembler_to_machineCode(Rest_file_codes, New_row, Mem).
+    */
 
 %%% lmc_load/2: Given a file, return the content of the memory.
 lmc_load(Filename, Mem) :-
     open(Filename, read, Input),
     read_string(Input, _, Output_string),
+    % Convert ouput file string to lowercase
     string_lower(Output_string, Output_string_lower),
+    % Split output file string into a list of rows (Windows and linux support)
+    split_string(Output_string_lower, '\n', '\r', Row_list),
+    write(Row_list),
+    % Convert assembly programm into machine code starting from row 0
+    assembler(Row_list, 0, Mem_undefined),
+    resolve_label(Mem_undefined, Mem),
+    close(Input).
+
+    /*
+
     string_codes(Output_string_lower, Output_string_codes),
     write(Output_string_lower),
     write(Output_string_codes),
-    % Convert assembler programm into machine code starting from row 0
-    assembler_to_machineCode(Output_string_codes, 0, Mem),
-    close(Input).
+    */
