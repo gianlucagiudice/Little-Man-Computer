@@ -30,20 +30,23 @@ Third argument  = argument of the instruction
 Forse potrei utilizzare "_" anzichè X. Questo perchè a me serve
 sapere se una particolare istruzione ammette o no argomenti,
 non mi interessa l'argomento nello specifico.
+
+Tutte queste istruzioni hannno una implicazione ovvero la loro esecuzione
 */
-instruction(dat, 0, _).
-instruction(add, 1, _).
-instruction(sub, 2, _).
-instruction(sta, 3, _).
-instruction(lda, 5, _).
-instruction(bra, 6, _).
-instruction(brz, 7, _).
-instruction(brp, 8, _).
-instruction(dat, 0, _).
-instruction(dat, 0).
-instruction(inp, 901).
-instruction(out, 902).
-instruction(hlt, hlt).
+instruction(dat, 0, Arg, State).
+instruction(add, 1, Arg, State).
+instruction(sub, 2, Arg, State).
+instruction(sta, 3, Arg, State).
+instruction(lda, 5, Arg, State).
+instruction(bra, 6, Arg, State).
+instruction(brz, 7, Arg, State).
+instruction(brp, 8, Arg, State).
+instruction(dat, 0, Arg, State).
+instruction(dat, 0, Arg, State).
+instruction(hlt, 0, Arg, State).
+instruction(inp, 901, Arg, State).
+instruction(out, 902, Arg, State).
+% explode state ritorna una lista contenente gli argomenti di state()
 
 
 
@@ -109,8 +112,18 @@ parse_command(Command, CommandList) :-
 */
 
 %%% assembler/2: Convert assembly program into machine code.
-assembler([Row | RestFile], PointeRow, [MachineCodeLine | Mem]) :-
-	fail.
+% Skip blank line
+assembler([Row | RestFile], LinePointer, Mem) :-
+    % Find all whitespace
+    findall(X, char_type(X, white), White), member(X, White),
+    split_string(Row, X, X, [Splitted | _]),
+    % If Line is blank skip it
+    Splitted = "", !,
+	assembler(RestFile, LinePointer, Mem).
+assembler([Row | RestFile], LinePointer, [MachineCodeLine | Mem]) :-
+    MachineCodeLine is LinePointer,
+    NewLinePointer is LinePointer + 1,
+    assembler(RestFile, NewLinePointer, Mem).
     /*
     % Split the ro into a list of strings
     split_string("a \tb  \t\t  \tu \t\t\t\t\t\t   c  \t   d", "\t ", " \t", L).
@@ -125,6 +138,26 @@ assembler([Row | RestFile], PointeRow, [MachineCodeLine | Mem]) :-
     assembler_to_machineCode(Rest_file_codes, New_row, Mem).
     */
 
+
+/*
+% if no label defined fail
+assembler([], LinePointer, Mem) :-
+    % if no label defined fail
+    !,
+    fail.
+
+% warning for label never used
+assembler([], LinePointer, Mem) :-
+    % Print warning for label never used
+    % NO CUT!!!!
+    fail.
+*/
+
+% Compile succesfully
+assembler([], LinePointer, []) :-
+    write("Compiled succesfully!").
+
+
 %%% lmc_load/2: Given a file, return the content of the memory.
 lmc_load(Filename, Mem) :-
     open(Filename, read, Input),
@@ -136,7 +169,8 @@ lmc_load(Filename, Mem) :-
     write(RowList),
     % Convert assembly programm into machine code starting from row 0
     assembler(RowList, 0, MemUndefined),
-    resolve_label(MemUndefined, Mem),
+    write(MemUndefined),
+    % resolve_label(MemUndefined, Mem),
     close(Input).
 
     /*
