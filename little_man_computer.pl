@@ -110,7 +110,7 @@ parse_command(Command, CommandList) :-
 
 %%% assembler/2: Convert assembly program into machine code.
 assembler([Row | Rest_file], Pointer_row, [MachineCode_line | Mem]) :-
-    fail.
+	fail.
     /*
     % Split the ro into a list of strings
     split_string("a \tb  \t\t  \tu \t\t\t\t\t\t   c  \t   d", "\t ", " \t", L).
