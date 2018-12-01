@@ -109,7 +109,7 @@ parse_command(Command, CommandList) :-
 */
 
 %%% assembler/2: Convert assembly program into machine code.
-assembler([Row | Rest_file], Pointer_row, [MachineCode_line | Mem]) :-
+assembler([Row | RestFile], PointeRow, [MachineCodeLine | Mem]) :-
 	fail.
     /*
     % Split the ro into a list of strings
@@ -128,20 +128,20 @@ assembler([Row | Rest_file], Pointer_row, [MachineCode_line | Mem]) :-
 %%% lmc_load/2: Given a file, return the content of the memory.
 lmc_load(Filename, Mem) :-
     open(Filename, read, Input),
-    read_string(Input, _, Output_string),
+    read_string(Input, _, OutputString),
     % Convert ouput file string to lowercase
-    string_lower(Output_string, Output_string_lower),
+    string_lower(OutputString, OutputStringLower),
     % Split output file string into a list of rows (Windows and linux support)
-    split_string(Output_string_lower, '\n', '\r', Row_list),
-    write(Row_list),
+    split_string(OutputStringLower, '\n', '\r', RowList),
+    write(RowList),
     % Convert assembly programm into machine code starting from row 0
-    assembler(Row_list, 0, Mem_undefined),
-    resolve_label(Mem_undefined, Mem),
+    assembler(RowList, 0, MemUndefined),
+    resolve_label(MemUndefined, Mem),
     close(Input).
 
     /*
 
-    string_codes(Output_string_lower, Output_string_codes),
-    write(Output_string_lower),
-    write(Output_string_codes),
+    string_codes(OutputStringLower, OutputString_codes),
+    write(OutputStringLower),
+    write(OutputString_codes),
     */
