@@ -7,13 +7,6 @@ Written by: Gianluca Giudice.
 
 
 /*
-%%% is_keyword_reserved/1: return if keyword is reserved to compiler.
-is_keyword_reserved(X) :-
-    % --- ATTENZIONE!!! PROBABILMENTE IL CUT È INUTILE ---
-    member(X, ["ADD", "SUB", "STA", "LDA", "BRA", "BRZ", "BRP", "INP", "OUT", "HLT", "DAT", "DAT"]), !.
-
-:- consult("nmome")
-
 
 guitracer
 
@@ -30,21 +23,59 @@ Fourth  argument = Current
 /*
 Tutte queste istruzioni hannno una implicazione ovvero la loro esecuzione
 */
-instruction(dat, 0, Arg, State, NewState).
-instruction(add, 1, Arg, State, NewState).
-instruction(sub, 2, Arg, State, NewState).
-instruction(sta, 3, Arg, State, NewState).
-instruction(lda, 5, Arg, State, NewState).
-instruction(bra, 6, Arg, State, NewState).
-instruction(brz, 7, Arg, State, NewState).
-instruction(brp, 8, Arg, State, NewState).
-instruction(dat, 0  , State, NewState).
-instruction(dat, 0  , State, NewState).
-instruction(hlt, 0  , State, NewState).
-instruction(inp, 901, State, NewState).
-instruction(out, 902, State, NewState).
-% explode state ritorna una lista contenente gli argomenti di state()
+execute_instruction(1, Arg, State, NewState) :-
+    % add
+    fail.
+execute_instruction(2, Arg, State, NewState) :-
+    % sub
+    fail.
+execute_instruction(3, Arg, State, NewState) :-
+    % sta
+    fail.
+execute_instruction(5, Arg, State, NewState) :-
+    % lda
+    fail.
+execute_instruction(6, Arg, State, NewState) :-
+    % bra
+    fail.
+execute_instruction(7, Arg, State, NewState) :-
+    % brz
+    fail.
+execute_instruction(8, Arg, State, NewState) :-
+    % brp
+    fail.
+execute_instruction(0, _  , State, NewState) :-
+    % hlt
+    fail.
+execute_instruction(9, 01 , State, NewState) :-
+    % inp
+    fail.
+execute_instruction(9, 02 , State, NewState) :-
+    % out
+    fail.
 
+
+compile_instruction(add, Arg, MachineCode) :- MachineCode is 100 + Arg.
+compile_instruction(sub, Arg, MachineCode) :- MachineCode is 200 + Arg.
+compile_instruction(sta, Arg, MachineCode) :- MachineCode is 300 + Arg.
+compile_instruction(lda, Arg, MachineCode) :- MachineCode is 500 + Arg.
+compile_instruction(bra, Arg, MachineCode) :- MachineCode is 600 + Arg.
+compile_instruction(brz, Arg, MachineCode) :- MachineCode is 700 + Arg.
+compile_instruction(brp, Arg, MachineCode) :- MachineCode is 800 + Arg.
+compile_instruction(dat, MachineCode, MachineCode).
+compile_instruction(dat, MachineCode) :-
+    compile_instruction(dat, 0, MachineCode).
+compile_instruction(hlt, 0).
+compile_instruction(inp, 901).
+compile_instruction(out, 902).
+
+%%% word_reserverd/1: True if Word is reserved to compiler
+word_reserverd(Word) :-
+    (compile_instruction(Word, 0, _) ; compile_instruction(Word, _)).
+
+%%% explode state ritorna una lista contenente gli argomenti di state()
+%%% defined_label/2: Label defined in the program. (labelName, MemPointer)
+defined_label('', '').
 
 
 /*
@@ -55,86 +86,124 @@ appena la trovo la aggiungo, se non la utilizzo la tolgo
 defined_label = label utilizzate con relativa posizione in memoria
 */
 
-/*
-Errori:
-    - Unexpected character
-    - Illegal instruction "Stampa istruzione e riga"
-Prima faccio il parsing avendo una lista con sole istruzione.
-poi guardo se l'eleemtno in testa alla lista è riservato, altrimenti è una label.
-Se dopo il primo elemento non ho una reserved keyword allora ho errore.
-Per ogni comando devo vedere se quel comando necessita argomenti, se non ne necessita allora ho errore
 
-Devo aggiungere alla base di conoscenza tutti le istruzioni valide Es:
-legal_instruction(9, X, Y)
-legal_instruction(6, X, Y)
-legal_instruction(3, X, Y)
-Se non unifica allora l'istruzione non è valida
-
-Devo guardare la lunghezza delle liste relative alle righe:
-    - Len = 1:
-        Istruzione senza argomenti e provo ad unificare
-    - Len = 2:
-        a) Istruzione con argomento tipo Numero
-        c) Istruzione tipo label con argomento
-        b) Istruzione con argomento tipo label
-            aggiungo label alle undefined_label, con riferimento alla riga
-    - Len = 3:
-        Lista con label iniziale del tipo:
-            Label - istruzione -argomenti
-            Se non unifica allora fallisce, vuol dire che non è valida
-*/
-
-
-
-%%% evaluate_line/3: Given a list of string codes, get the first line
-
-
-%%% split_assembly_line/2 spit line into a list of single word
-split_assembly_line(Line, SplittedLine) :-
-    % Find all whitespace
-    findall(X, char_type(X, white), White), member(X, White),
-    % Split string using whitespaces
-    split_string(Line, X, X, SplittedLine).
-
-/*
-
-%%% assembler/2: Convert assembly program into machine code.
+%%% assembler/4: Convert whole assembly program into machine code.
+% Check if all label defined
+% Compiled succesfully
+assembler([], _, []) :-
+    writeln('Msg: Compiled succesfully.').
+% Memory overflow
+assembler(_, MemPointer, _) :-
+    MemPointer >= 100,
+    writeln('COMPILE ERROR: Too much instructions to load in memory.'), !, fail.
 % Skip blank line
-assembler([Line | RestFile], LinePointer, Mem) :-
+assembler([Line | RestFile], MemPointer, Mem) :-
     split_assembly_line(Line, [HeadSplittedLine | _]),
     % If Line is blank skip it
     HeadSplittedLine = "", !,
-	assembler(RestFile, LinePointer, Mem).
+	assembler(RestFile, MemPointer, Mem).
 % Convert each line into machine code
-assembler([Line | RestFile], LinePointer, [MemLine | Mem]) :-
+assembler([Line | RestFile], MemPointer, [MemLine | Mem]) :-
     split_assembly_line(Line, SplittedLine),
-    assembler_line(SplittedLine, MemLine), !,
-    NewLinePointer is LinePointer + 1,
-    assembler(RestFile, NewLinePointer, Mem).
-
-*/
+    % Convert single line into machine code
+    assembler_line(SplittedLine, MemPointer, MemLine), !,
+    NewMemPointer is MemPointer + 1,
+    assembler(RestFile, NewMemPointer, Mem).
 % If not unify with other, then is a compile error
-assembler([Line | RestFile], LinePointer, [MemLine | Mem]) :-
-    format('COMPILE ERROR: Invalid instruction\nat line ~d: "~s".\n', [LinePointer, Line]),
-    fail.
+assembler([Line | _], _, _) :-
+    format('Instruction: "~s".\n', [Line]), fail.
+
+
+
+%%% split_assembly_line/2 split assembly line into a list of single word
+split_assembly_line(Line, SplittedLine) :-
+    % Remove comment in line.
+    % The char "/" is allowed only in comment so is possible to use split_string
+    split_string(Line, "/", "/", [InstructionNoComment | _]),
+    % Split string using whitespaces
+    split_string(InstructionNoComment, " \t", " \t", SplittedLine).
+
+
+
+%%% assembler_line/3: Convert a single instruction into machine code.
 /*
-% if no label defined fail
-assembler([], LinePointer, Mem) :-
-    % if no label defined fail
-    !,
-    fail.
-
-% warning for label never used
-assembler([], LinePointer, Mem) :-
-    % Print warning for label never used
-    % NO CUT!!!!
-    fail.
+Evaluate the length of the list containing the single assembly line
+    - Len = 1:
+        a) [instruction].
+            An instruction without argument
+    - Len = 2:
+        a) [instruction - integerArgument]
+            Instruction with an integer argument
+        b) [instruction - labelArgument]
+            Instruction with an label   argument
+        c) [label - instructionWhitoutArgument]
+            A label followed by an instruction without arguments
+    - Len = 3:
+        a) [label - instruction - argument]
+            Label followed by an instruction and its argument
 */
+% [1.a] = Instruction without argument
+assembler_line([Instruction], _, MachineCode) :-
+    atom_string(AtomInstruction, Instruction),
+    compile_instruction(AtomInstruction, MachineCode), !.
+% [2.a] = Instruction followed by an integer as argument
+assembler_line([Instruction, Argument], _, MachineCode) :-
+    atom_string(AtomInstruction, Instruction),
+    number_string(ArgumentValue, Argument),
+    compile_instruction(AtomInstruction, ArgumentValue, MachineCode), !.
+% [2.b] = Instruction folllowed by a label as argument
+assembler_line([Instruction, Label], MemPointer, MachineCode) :-
+    atom_string(AtomInstruction, Instruction),
+    atom_string(AtomLabel, Label),
+    % Label can not have the same name as instruction.
+    \+ word_reserverd(AtomLabel),
+    % Add the undefined_label to the knowledge base.
+    assertz(undefined_label(AtomLabel, MemPointer)),
+    compile_instruction(AtomInstruction, 0, MachineCode), !.
+% [2.c] = Label alredy defined.
+assembler_line([Label, _], _, _) :-
+    defined_label(AtomLabel, _), atom_string(AtomLabel, Label),
+    format('COMPILE ERROR: Label "~s" is alredy defined.\n', [Label]), !, fail.
+% [2.c] = Label followed by an instruction without argument
+assembler_line([Label, Instruction], MemPointer, MachineCode) :-
+    atom_string(AtomLabel, Label),
+    atom_string(AtomInstruction, Instruction),
+    % Label can not have the same name as instruction.
+    \+ word_reserverd(AtomLabel),
+    % Add the defined label to knowledge base
+    assertz(defined_label(AtomLabel, MemPointer)),
+    % Instruction without argument
+    compile_instruction(AtomInstruction, MachineCode), !.
+% [3.a] = Label alredy defined.
+assembler_line([Label, _, _], _, _) :-
+    atom_string(AtomLabel, Label), defined_label(AtomLabel, _),
+    format('COMPILE ERROR: Label "~s" is alredy defined.\n', [Label]), !, fail.
+% [3.a] = Label followed by an instruction and its argument
+assembler_line([Label, Instruction, Argument], MemPointer, MachineCode) :-
+    atom_string(AtomLabel, Label),
+    atom_string(AtomInstruction, Instruction),
+    number_string(ArgumentValue, Argument),
+    % Label can not have the same name as instruction
+    \+ word_reserverd(AtomLabel),
+    % Add the defined label to knowledge base
+    assertz(defined_label(AtomLabel, MemPointer)),
+    % Instruction with its argument
+    compile_instruction(AtomInstruction, ArgumentValue, MachineCode), !.
+% If not unify with other, then is an invalid instruction
+assembler_line(_, _, _) :-
+    writeln('COMPILE ERROR: Invalid instruction'), fail.
 
-% Compile succesfully
-assembler([], LinePointer, []) :-
-    write("Msg: Compiled succesfully."), nl.
 
+
+%%% resolve_label/2: Convert a label to corresponding value
+% If some label are still undefined
+% If label value is alredy defined then return it
+resolve_label(Label, _, LabelValue) :- defined_label(Label, LabelValue), !.
+% Otherwise reutrn 0 and add undefined label
+resolve_label(Label, MemPointer, 0) :-
+    assertz(undefined_label(Label, MemPointer)).
+
+%%% define_new_label/
 
 %%% lmc_load/2: Given a file, return the content of the memory.
 lmc_load(Filename, Mem) :-
@@ -144,10 +213,12 @@ lmc_load(Filename, Mem) :-
     string_lower(OutputString, OutputStringLower),
     % Split output file string into a list of rows (Windows and linux support)
     split_string(OutputStringLower, '\n', '\r', LineList),
-    write(LineList), nl,
+    writeln(LineList),
     % Convert assembly programm into machine code starting from line 0
     assembler(LineList, 0, MemUndefined),
-    write(MemUndefined),
+    writeln(MemUndefined),
+    % Resolve all undefined label
+    resolve_label(MemUndefined, Mem),
     % resolve_label(MemUndefined, Mem),
     close(Input).
 
