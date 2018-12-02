@@ -54,7 +54,6 @@ execute_instruction(9, 02 , State, NewState) :-
     % out
     fail.
 
-
 compile_instruction(add, Arg, MachineCode) :- MachineCode is 100 + Arg.
 compile_instruction(sub, Arg, MachineCode) :- MachineCode is 200 + Arg.
 compile_instruction(sta, Arg, MachineCode) :- MachineCode is 300 + Arg.
@@ -73,9 +72,10 @@ compile_instruction(out, 902).
 word_reserverd(Word) :-
     (compile_instruction(Word, 0, _) ; compile_instruction(Word, _)).
 
-%%% explode state ritorna una lista contenente gli argomenti di state()
 %%% defined_label/2: Label defined in the program. (labelName, MemPointer)
-defined_label('', '').
+defined_label('', '').      % Placeholder
+%%% undefined_label/2: Label undefined in the program. (labelName, MemPointer)
+undefined_label('', '').    % Placeholder
 
 
 /*
@@ -122,6 +122,7 @@ split_assembly_line(Line, SplittedLine) :-
     split_string(Line, "/", "/", [InstructionNoComment | _]),
     % Split string using whitespaces
     split_string(InstructionNoComment, " \t", " \t", SplittedLine).
+
 
 
 
@@ -195,15 +196,27 @@ assembler_line(_, _, _) :-
 
 
 
-%%% resolve_label/2: Convert a label to corresponding value
+%%% resolve_labels/2: Convert a label to corresponding value
+resolve_labels(MemUndresolved, Mem) :-
+    bagof(Row, undefined_label(LabelName, Row), Rows),
+    defined_label(LabelName, LabelValue),
+    resolve_one_label(Rows, Value),
+    % Check if all labels are been resolved
+    findall(X, undefined_label(X, _), Y), length(Y, 1), !.
 % If some label are still undefined
-% If label value is alredy defined then return it
-resolve_label(Label, _, LabelValue) :- defined_label(Label, LabelValue), !.
+resolve_labels(_, _) :-
+    writeln('COMPILE ERROR: Label undefined'),
+    setof(LabelName, Row^defined_label(LabelName, Row), [_ | UndefinedLabel]),
+    writeln(UndefinedLabel),
+    fail.
+
+
+
 % Otherwise reutrn 0 and add undefined label
-resolve_label(Label, MemPointer, 0) :-
+resolve_labels(Label, MemPointer, 0) :-
     assertz(undefined_label(Label, MemPointer)).
 
-%%% define_new_label/
+
 
 %%% lmc_load/2: Given a file, return the content of the memory.
 lmc_load(Filename, Mem) :-
@@ -215,16 +228,8 @@ lmc_load(Filename, Mem) :-
     split_string(OutputStringLower, '\n', '\r', LineList),
     writeln(LineList),
     % Convert assembly programm into machine code starting from line 0
-    assembler(LineList, 0, MemUndefined),
-    writeln(MemUndefined),
+    assembler(LineList, 0, MemUndresolved),
+    writeln(MemUndresolved),
     % Resolve all undefined label
-    resolve_label(MemUndefined, Mem),
-    % resolve_label(MemUndefined, Mem),
+    resolve_labels(MemUndresolved, Mem),
     close(Input).
-
-    /*
-
-    string_codes(OutputStringLower, OutputString_codes),
-    write(OutputStringLower),
-    write(OutputString_codes),
-    */
