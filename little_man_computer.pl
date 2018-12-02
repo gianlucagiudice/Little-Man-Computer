@@ -54,16 +54,16 @@ execute_instruction(9, 02 , State, NewState) :-
     % out
     fail.
 
-compile_instruction(add, Arg, MachineCode) :- MachineCode is 100 + Arg.
-compile_instruction(sub, Arg, MachineCode) :- MachineCode is 200 + Arg.
-compile_instruction(sta, Arg, MachineCode) :- MachineCode is 300 + Arg.
-compile_instruction(lda, Arg, MachineCode) :- MachineCode is 500 + Arg.
-compile_instruction(bra, Arg, MachineCode) :- MachineCode is 600 + Arg.
-compile_instruction(brz, Arg, MachineCode) :- MachineCode is 700 + Arg.
-compile_instruction(brp, Arg, MachineCode) :- MachineCode is 800 + Arg.
-compile_instruction(dat, MachineCode, MachineCode).
-compile_instruction(dat, MachineCode) :-
-    compile_instruction(dat, 0, MachineCode).
+valid_argument(Arg) :- Arg =< 99, Arg >= 0.
+compile_instruction(add, Arg, Code) :- valid_argument(Arg), Code is 100 + Arg.
+compile_instruction(sub, Arg, Code) :- valid_argument(Arg), Code is 200 + Arg.
+compile_instruction(sta, Arg, Code) :- valid_argument(Arg), Code is 300 + Arg.
+compile_instruction(lda, Arg, Code) :- valid_argument(Arg), Code is 500 + Arg.
+compile_instruction(bra, Arg, Code) :- valid_argument(Arg), Code is 600 + Arg.
+compile_instruction(brz, Arg, Code) :- valid_argument(Arg), Code is 700 + Arg.
+compile_instruction(brp, Arg, Code) :- valid_argument(Arg), Code is 800 + Arg.
+compile_instruction(dat, Code, Code) :- Code =< 999, Code >= 0.
+compile_instruction(dat, Code) :- compile_instruction(dat, 0, Code).
 compile_instruction(hlt, 0).
 compile_instruction(inp, 901).
 compile_instruction(out, 902).
@@ -197,24 +197,25 @@ assembler_line(_, _, _) :-
 
 
 %%% resolve_labels/2: Convert a label to corresponding value
-resolve_labels(MemUndresolved, Mem) :-
+resolve_labels(MemUnresolved, Mem) :-
     bagof(Row, undefined_label(LabelName, Row), Rows),
     defined_label(LabelName, LabelValue),
-    resolve_one_label(Rows, Value),
+    write(Rows),
+    resolve_one_label(Rows, MemUnresolved, Mem),
     % Check if all labels are been resolved
     findall(X, undefined_label(X, _), Y), length(Y, 1), !.
 % If some label are still undefined
 resolve_labels(_, _) :-
     writeln('COMPILE ERROR: Label undefined'),
     setof(LabelName, Row^defined_label(LabelName, Row), [_ | UndefinedLabel]),
-    writeln(UndefinedLabel),
-    fail.
-
-
-
-% Otherwise reutrn 0 and add undefined label
-resolve_labels(Label, MemPointer, 0) :-
-    assertz(undefined_label(Label, MemPointer)).
+    write("List of label: "), writeln(UndefinedLabel), !, fail.
+%%% resolve_one_label/2: Resolve all values relative to a single label
+resolve_one_label([], Mem, Mem).
+resolve_one_label([Row | List], MemUnresolved, Mem) :-
+    nth0(Row, MemUnresolved, OldValue, Rest),
+    NewValue is OldValue + Row,
+    nth0(Row, Mem, NewValue, Rest),
+    resolve_one_label(List, Mem, Mem).
 
 
 
@@ -228,8 +229,12 @@ lmc_load(Filename, Mem) :-
     split_string(OutputStringLower, '\n', '\r', LineList),
     writeln(LineList),
     % Convert assembly programm into machine code starting from line 0
-    assembler(LineList, 0, MemUndresolved),
-    writeln(MemUndresolved),
+    assembler(LineList, 0, MemUnresolved),
+    writeln(MemUnresolved),
     % Resolve all undefined label
-    resolve_labels(MemUndresolved, Mem),
+
+    % FINDALL UNRESOLVED LABEL and start to resolve
+    % resolve_labels(DefinedLabel, MemUnresolved, Mem),
+
+    writeln(Mem),
     close(Input).
