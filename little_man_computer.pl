@@ -197,6 +197,9 @@ assembler_line(_, _, _) :-
 
 
 %%% resolve_labels/2: Convert a label to corresponding value
+resolve_labels([], Mem, Mem).
+resolve_labels(DefinedLabelList, MemUnresolved, Mem).
+/*
 resolve_labels(MemUnresolved, Mem) :-
     bagof(Row, undefined_label(LabelName, Row), Rows),
     defined_label(LabelName, LabelValue),
@@ -209,6 +212,7 @@ resolve_labels(_, _) :-
     writeln('COMPILE ERROR: Label undefined'),
     setof(LabelName, Row^defined_label(LabelName, Row), [_ | UndefinedLabel]),
     write("List of label: "), writeln(UndefinedLabel), !, fail.
+*/
 %%% resolve_one_label/2: Resolve all values relative to a single label
 resolve_one_label([], Mem, Mem).
 resolve_one_label([Row | List], MemUnresolved, Mem) :-
