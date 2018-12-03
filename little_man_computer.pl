@@ -125,7 +125,6 @@ split_assembly_line(Line, SplittedLine) :-
 
 
 
-
 %%% assembler_line/3: Convert a single instruction into machine code.
 /*
 Evaluate the length of the list containing the single assembly line
@@ -147,52 +146,61 @@ Evaluate the length of the list containing the single assembly line
 assembler_line([Instruction], _, MachineCode) :-
     atom_string(AtomInstruction, Instruction),
     compile_instruction(AtomInstruction, MachineCode), !.
+% [1.a] = Not valid
+assembler_line([_], _, _) :- fail.
 % [2.a] = Instruction followed by an integer as argument
 assembler_line([Instruction, Argument], _, MachineCode) :-
     atom_string(AtomInstruction, Instruction),
-    number_string(ArgumentValue, Argument),
-    compile_instruction(AtomInstruction, ArgumentValue, MachineCode), !.
+    number_string(ArgumentValue, Argument), !,
+    compile_instruction(AtomInstruction, ArgumentValue, MachineCode).
+% [2.a] = Not valid
+assembler_line([_, _], _, _) :- fail.
 % [2.b] = Instruction folllowed by a label as argument
 assembler_line([Instruction, Label], MemPointer, MachineCode) :-
-    atom_string(AtomInstruction, Instruction),
-    atom_string(AtomLabel, Label),
-    % Label can not have the same name as instruction.
-    \+ word_reserverd(AtomLabel),
-    % Add the undefined_label to the knowledge base.
-    assertz(undefined_label(AtomLabel, MemPointer)),
-    compile_instruction(AtomInstruction, 0, MachineCode), !.
-% [2.c] = Label alredy defined.
-assembler_line([Label, _], _, _) :-
-    defined_label(AtomLabel, _), atom_string(AtomLabel, Label),
-    format('COMPILE ERROR: Label "~s" is alredy defined.\n', [Label]), !, fail.
+    assembler_line([Instruction, "0"], _, MachineCode),
+    atom_string(AtomLabel, Label), !,
+    evaluate_label(AtomLabel, MemPointer, undefined_label).
 % [2.c] = Label followed by an instruction without argument
 assembler_line([Label, Instruction], MemPointer, MachineCode) :-
-    atom_string(AtomLabel, Label),
-    atom_string(AtomInstruction, Instruction),
-    % Label can not have the same name as instruction.
-    \+ word_reserverd(AtomLabel),
-    % Add the defined label to knowledge base
-    assertz(defined_label(AtomLabel, MemPointer)),
-    % Instruction without argument
-    compile_instruction(AtomInstruction, MachineCode), !.
-% [3.a] = Label alredy defined.
-assembler_line([Label, _, _], _, _) :-
-    atom_string(AtomLabel, Label), defined_label(AtomLabel, _),
-    format('COMPILE ERROR: Label "~s" is alredy defined.\n', [Label]), !, fail.
+    assembler_line([Instruction], _, MachineCode),
+    atom_string(AtomLabel, Label), !,
+    evaluate_label(AtomLabel, MemPointer, defined_label).
 % [3.a] = Label followed by an instruction and its argument
 assembler_line([Label, Instruction, Argument], MemPointer, MachineCode) :-
-    atom_string(AtomLabel, Label),
     atom_string(AtomInstruction, Instruction),
-    number_string(ArgumentValue, Argument),
-    % Label can not have the same name as instruction
-    \+ word_reserverd(AtomLabel),
-    % Add the defined label to knowledge base
-    assertz(defined_label(AtomLabel, MemPointer)),
-    % Instruction with its argument
-    compile_instruction(AtomInstruction, ArgumentValue, MachineCode), !.
+    word_reserverd(AtomInstruction),
+    % May be a valid instruction
+    assembler_line([Instruction, Argument], MemPointer, MachineCode),
+    atom_string(AtomLabel, Label), !,
+    evaluate_label(AtomLabel, MemPointer, defined_label).
 % If not unify with other, then is an invalid instruction
-assembler_line(_, _, _) :-
+assembler_line(_, MemPointer, _) :-
     writeln('COMPILE ERROR: Invalid instruction'), fail.
+
+
+
+%%% evaluate_label/3: Add a label to knowledge base
+% Label alredy defined
+evaluate_label(Label, _, defined_label) :-
+    % Label can not be alredy defined
+    defined_label(Label, _), !,
+    format('COMPILE ERROR: Label "~s" is alredy defined.\n', [Label]), fail.
+evaluate_label(Label, _, _) :-
+    % Label can not have the same name as instruction.
+    word_reserverd(Label), !,
+    % Label can not be alredy defined
+    format('COMPILE ERROR: Label "~s" is a reserved word.\n', [Label]), fail.
+% Add label to knowledge base
+evaluate_label(Label, MemPointer, LabelType) :-
+    % Create assertz = assertz(labelType(AtomLabel, MemPointer))
+    % Create the functor to add in knowledge base
+    functor(Func, LabelType, 2),
+    arg(1, Func, Label),
+    arg(2, Func, MemPointer),
+    % Assert the functor
+    functor(Assert, assertz, 1),
+    arg(1, Assert, Func),
+    call(Assert).
 
 
 
