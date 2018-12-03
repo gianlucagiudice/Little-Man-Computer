@@ -194,13 +194,9 @@ evaluate_label(Label, _, _) :-
 evaluate_label(Label, MemPointer, LabelType) :-
     % Create assertz = assertz(labelType(AtomLabel, MemPointer))
     % Create the functor to add in knowledge base
-    functor(Func, LabelType, 2),
-    arg(1, Func, Label),
-    arg(2, Func, MemPointer),
+    functor(Func, LabelType, 2), arg(1, Func, Label), arg(2, Func, MemPointer),
     % Assert the functor
-    functor(Assert, assertz, 1),
-    arg(1, Assert, Func),
-    call(Assert).
+    functor(Assert, assertz, 1), arg(1, Assert, Func), call(Assert).
 
 
 
