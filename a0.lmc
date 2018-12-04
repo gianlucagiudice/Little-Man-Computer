@@ -1,9 +1,7 @@
 LAD LDA 0
     OUT
     SUB ONE
-
-
-
+    one p
 
     BRZ ONE p
     LDA LOAD

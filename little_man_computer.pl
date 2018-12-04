@@ -70,7 +70,9 @@ compile_instruction(out, 902).
 
 %%% word_reserverd/1: True if Word is reserved to compiler
 word_reserverd(Word) :-
-    (compile_instruction(Word, 0, _) ; compile_instruction(Word, _)).
+    atom_string(AtomWord, Word), compile_instruction(AtomWord, 0, _).
+word_reserverd(Word) :-
+    atom_string(AtomWord, Word), compile_instruction(AtomWord, 0, _).
 
 %%% defined_label/2: Label defined in the program. (labelName, MemPointer)
 defined_label('', '').      % Placeholder
