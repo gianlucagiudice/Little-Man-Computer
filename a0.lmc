@@ -1,10 +1,11 @@
-LAD LDA 0
+LOAD LDA 0
     OUT
     SUB ONE
-    one p
 
-    BRZ ONE p
+
+    add 5
     LDA LOAD
+    lda paperino
     ADD ONE
     STA LOAD
     BRA LOAD
