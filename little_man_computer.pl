@@ -15,9 +15,7 @@ Third   argument = argument of the instruction
 Fourth  argument = Current
 */
 
-/*
-Tutte queste istruzioni hannno una implicazione ovvero la loro esecuzione
-*/
+%%% execute_instruction/4: Execute a single instruction
 execute_instruction(1, Arg, State, NewState) :-
     % add
     fail.
@@ -49,30 +47,57 @@ execute_instruction(9, 02 , State, NewState) :-
     % out
     fail.
 
-valid_argument(Arg) :- Arg =< 99, Arg >= 0.
-compile_instruction(add, Arg, Code) :- valid_argument(Arg), Code is 100 + Arg.
-compile_instruction(sub, Arg, Code) :- valid_argument(Arg), Code is 200 + Arg.
-compile_instruction(sta, Arg, Code) :- valid_argument(Arg), Code is 300 + Arg.
-compile_instruction(lda, Arg, Code) :- valid_argument(Arg), Code is 500 + Arg.
-compile_instruction(bra, Arg, Code) :- valid_argument(Arg), Code is 600 + Arg.
-compile_instruction(brz, Arg, Code) :- valid_argument(Arg), Code is 700 + Arg.
-compile_instruction(brp, Arg, Code) :- valid_argument(Arg), Code is 800 + Arg.
-compile_instruction(dat, Code, Code) :- Code =< 999, Code >= 0.
-compile_instruction(dat, Code) :- compile_instruction(dat, 0, Code).
+valid_arg(Argument, Atom) :-
+    number_string(Atom, Argument), Atom =< 99, Atom >= 0.
+%%% compile_instruction/4: Convert an instruction to machine code
+% Instruction with numeric argument
+compile_instruction(add, Arg, _, MaC) :-
+    number_string(Atom, Arg), !, Atom =< 99, Atom >= 0, MaC is 100 + Atom.
+compile_instruction(sub, Arg, _, MaC) :-
+    number_string(Atom, Arg), !, Atom =< 99, Atom >= 0, MaC is 200 + Atom.
+compile_instruction(sta, Arg, _, MaC) :-
+    number_string(Atom, Arg), !, Atom =< 99, Atom >= 0, MaC is 300 + Atom.
+compile_instruction(lda, Arg, _, MaC) :-
+    number_string(Atom, Arg), !, Atom =< 99, Atom >= 0, MaC is 500 + Atom.
+compile_instruction(bra, Arg, _, MaC) :-
+    number_string(Atom, Arg), !, Atom =< 99, Atom >= 0, MaC is 600 + Atom.
+compile_instruction(brz, Arg, _, MaC) :-
+    number_string(Atom, Arg), !, Atom =< 99, Atom >= 0, MaC is 700 + Atom.
+compile_instruction(brp, Arg, _, MaC) :-
+    number_string(Atom, Arg), !, Atom =< 99, Atom >= 0, MaC is 800 + Atom.
+% Instruction with label as argument
+compile_instruction(add, Arg, MemPointer, MaC) :-
+    evaluate_label(Arg, MemPointer, undefined_label),
+    compile_instruction(add, "0", _, MaC).
+compile_instruction(sub, Arg, MemPointer, MaC) :-
+    evaluate_label(Arg, MemPointer, undefined_label),
+    compile_instruction(sub, "0", _, MaC).
+compile_instruction(sta, Arg, MemPointer, MaC) :-
+    evaluate_label(Arg, MemPointer, undefined_label),
+    compile_instruction(sta, "0", _, MaC).
+compile_instruction(lda, Arg, MemPointer, MaC) :-
+    evaluate_label(Arg, MemPointer, undefined_label),
+    compile_instruction(lda, "0", _, MaC).
+compile_instruction(bra, Arg, MemPointer, MaC) :-
+    evaluate_label(Arg, MemPointer, undefined_label),
+    compile_instruction(bra, "0", _, MaC).
+compile_instruction(brz, Arg, MemPointer, MaC) :-
+    evaluate_label(Arg, MemPointer, undefined_label),
+    compile_instruction(brz, "0", _, MaC).
+compile_instruction(brp, Arg, MemPointer, MaC) :-
+    evaluate_label(Arg, MemPointer, undefined_label),
+    compile_instruction(brp, "0", _, MaC).
+compile_instruction(dat, MaC, _, MaC) :-
+    number_string(X, MaC), X =< 999, X >= 0.
+compile_instruction(dat, MaC) :- compile_instruction(dat, "0", _, MaC).
 compile_instruction(hlt, 0).
 compile_instruction(inp, 901).
 compile_instruction(out, 902).
 
-
-/*
-findall(X, compile_instruction(X, _), Y).
-*/
-%%% word_reserverd/1: True if Word is reserved to compiler
 word_reserverd(Word) :-
-    atom_string(AtomWord, Word), compile_instruction(AtomWord, 0, _).
+    atom_string(AtomWord, Word), compile_instruction(AtomWord, "0", _, _), !.
 word_reserverd(Word) :-
     atom_string(AtomWord, Word), compile_instruction(AtomWord, _).
-
 
 
 
@@ -98,7 +123,7 @@ assembler([], _, []).
 % Memory overflow
 assembler(_, MemPointer, _) :-
     MemPointer >= 100,
-    writeln('COMPILE ERROR: Too much instructions to load in memory.'), !, fail.
+    writeln('COMPILE ERROR: Too many instructions to load in memory.'), !, fail.
 % Skip blank line
 assembler([Line | RestFile], MemPointer, Mem) :-
     split_assembly_line(Line, [HeadSplittedLine | _]),
@@ -131,60 +156,41 @@ split_assembly_line(Line, SplittedLine) :-
 
 
 %%% assembler_line/3: Convert a single instruction into machine code.
-/*
-Evaluate the length of the list containing the single assembly line
-    - Len = 1:
-        a) [instruction].
-            An instruction without argument
-    - Len = 2:
-        a) [instruction - integerArgument]
-            Instruction with an integer argument
-        b) [instruction - labelArgument]
-            Instruction with an label   argument
-        c) [label - instructionWhitoutArgument]
-            A label followed by an instruction without arguments
-    - Len = 3:
-        a) [label - instruction - argument]
-            Label followed by an instruction and its argument
-*/
 % [1.a] = Instruction without argument
 assembler_line([Instruction], _, MachineCode) :-
     atom_string(AtomInstruction, Instruction),
     compile_instruction(AtomInstruction, MachineCode), !.
-% [2.a] = Instruction followed by an integer as argument
-assembler_line([Instruction, Argument], _, MachineCode) :-
-    % May be a valid instruction
+assembler_line([X, Y], _, _) :-
+    word_reserverd(X), word_reserverd(Y), !,
+    writeln('COMPILE ERROR: Invalid instruction'), fail.
+% [2.a] = Instruction followed by an argument
+assembler_line([Instruction, Argument], MemPointer, MachineCode) :-
+    word_reserverd(Instruction),
     atom_string(AtomInstruction, Instruction),
-    number_string(ArgumentValue, Argument),
-    compile_instruction(AtomInstruction, ArgumentValue, MachineCode), !.
-% [2.b] = Instruction folllowed by a label as argument
-assembler_line([Instruction, Label], MemPointer, MachineCode) :-
-    word_reserverd(Instruction), \+ word_reserverd(Label),
-    % May be a valid instruction
-    assembler_line([Instruction, "0"], _, MachineCode),
-    evaluate_label(Label, MemPointer, undefined_label), !.
+    compile_instruction(AtomInstruction, Argument, MemPointer, MachineCode), !.
 % [2.c] = Label followed by an instruction without argument
 assembler_line([Label, Instruction], MemPointer, MachineCode) :-
-    word_reserverd(Instruction), \+ word_reserverd(Label),
-    % May be a valid instruction
+    word_reserverd(Instruction), !,
     assembler_line([Instruction], _, MachineCode),
-    evaluate_label(Label, MemPointer, defined_label), !.
+    evaluate_label(Label, MemPointer, defined_label).
 % [3.a] = Label followed by an instruction and its argument
 assembler_line([Label, Instruction, Argument], MemPointer, MachineCode) :-
-    word_reserverd(Instruction), \+ word_reserverd(Label),
-    % May be a valid instruction
-    assembler_line([Instruction, Argument], MemPointer, MachineCode), !,
+    word_reserverd(Instruction), !,
+    assembler_line([Instruction, Argument], MemPointer, MachineCode),
     evaluate_label(Label, MemPointer, defined_label).
 % If not unify with other, then is an invalid instruction
 assembler_line(_, _, _) :-
     writeln('COMPILE ERROR: Invalid instruction'), fail.
 
-
+/*
+istruzione e label
+*/
 
 %%% evaluate_label/3: Add a label to knowledge base
+% Label is a reserved word
+evaluate_label(Label, _, _) :-
+    word_reserverd(Label), !, fail.
 % Label alredy defined
-
-% alnum. controlla se alfanumerico
 evaluate_label(Label, _, defined_label) :-
     atom_string(AtomLabel, Label),
     % Label can not be defined more than once
@@ -204,7 +210,7 @@ evaluate_label(Label, MemPointer, Type) :-
 %%% resolve_labels/2: Convert a label to corresponding value
 % All labels resolved succesfully
 resolve_labels([], Mem, Mem) :-
-    % If the only undefined_label is placeholder, the all labels are resolved
+    % If the only undefined_label is placeholder, then all labels are resolved
     findall(X, undefined_label(X, _), LabelName),
     length(LabelName, 1), !.
 % If still some labels are undefined
@@ -242,6 +248,11 @@ lmc_load(Filename, Mem) :-
     % Convert ouput file string to lowercase
     string_lower(OutputString, OutputStringLower),
     % Split output file string into a list of rows (Windows and linux support)
+    /*
+    TODO
+    Doesen't work now as it is
+    Windows, linux and mac support for newline.
+    */
     split_string(OutputStringLower, '\n', '\r', LineList),
     % Convert assembly programm into machine code starting from line 0
     assembler(LineList, 0, MemUnresolved),

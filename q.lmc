@@ -1,16 +1,13 @@
 LOAD LDA 0
     OUT
     SUB ONE
-
-
-
-dat add
+    dat load
     BRZ ONE
     LDA LOAD
-    ADD ONE
+
+
+
+    ADD one
     STA LOAD
     BRA LOAD
-
-
-
 ONE DAT 1
