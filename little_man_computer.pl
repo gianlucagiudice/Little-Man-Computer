@@ -5,16 +5,7 @@ little_man_computer.pl
 Written by: Gianluca Giudice.
 */
 
-
-
 /*
-instruction/3: List of instructions (word reserved).
-First   argument = reserved word for instruction.
-Second  argument = machine code relative to the instruction.
-Third   argument = argument of the instruction
-Fourth  argument = Current
-*/
-
 %%% execute_instruction/4: Execute a single instruction
 execute_instruction(1, Arg, State, NewState) :-
     % add
@@ -46,6 +37,7 @@ execute_instruction(9, 01 , State, NewState) :-
 execute_instruction(9, 02 , State, NewState) :-
     % out
     fail.
+*/
 
 valid_arg(Argument, Atom) :-
     number_string(Atom, Argument), Atom =< 99, Atom >= 0.
@@ -107,18 +99,8 @@ defined_label('', '').      % Placeholder
 undefined_label('', '').    % Placeholder
 
 
-/*
-        MANIPOLAZIONE BASE DI CONOSCENZA = Assert e retract
-undefined_label = label ancora non usate
-appena la trovo la aggiungo, se non la utilizzo la tolgo
-
-defined_label = label utilizzate con relativa posizione in memoria
-*/
-
 
 %%% assembler/4: Convert whole assembly program into machine code.
-% Check if all label defined
-% Compiled succesfully
 assembler([], _, []).
 % Memory overflow
 assembler(_, MemPointer, _) :-
@@ -156,35 +138,39 @@ split_assembly_line(Line, SplittedLine) :-
 
 
 %%% assembler_line/3: Convert a single instruction into machine code.
+% Len = 1
 % [1.a] = Instruction without argument
 assembler_line([Instruction], _, MachineCode) :-
     atom_string(AtomInstruction, Instruction),
     compile_instruction(AtomInstruction, MachineCode), !.
+% Len = 2
 assembler_line([X, Y], _, _) :-
     word_reserverd(X), word_reserverd(Y), !,
     writeln('COMPILE ERROR: Invalid instruction'), fail.
+% [2.c] = Label followed by an instruction without argument
+assembler_line([Label, Instruction], MemPointer, MachineCode) :-
+    word_reserverd(Instruction), !,
+    evaluate_label(Label, MemPointer, defined_label),
+    assembler_line([Instruction], _, MachineCode).
 % [2.a] = Instruction followed by an argument
 assembler_line([Instruction, Argument], MemPointer, MachineCode) :-
     word_reserverd(Instruction),
     atom_string(AtomInstruction, Instruction),
     compile_instruction(AtomInstruction, Argument, MemPointer, MachineCode), !.
-% [2.c] = Label followed by an instruction without argument
-assembler_line([Label, Instruction], MemPointer, MachineCode) :-
-    word_reserverd(Instruction), !,
-    assembler_line([Instruction], _, MachineCode),
-    evaluate_label(Label, MemPointer, defined_label).
+% Len = 3
+assembler_line([X, _, _], _, _) :-
+    word_reserverd(X), !,
+    writeln('COMPILE ERROR: Invalid instruction'), fail.
 % [3.a] = Label followed by an instruction and its argument
 assembler_line([Label, Instruction, Argument], MemPointer, MachineCode) :-
     word_reserverd(Instruction), !,
     assembler_line([Instruction, Argument], MemPointer, MachineCode),
-    evaluate_label(Label, MemPointer, defined_label).
+    evaluate_label(Label, MemPointer, defined_label), !.
 % If not unify with other, then is an invalid instruction
 assembler_line(_, _, _) :-
     writeln('COMPILE ERROR: Invalid instruction'), fail.
 
-/*
-istruzione e label
-*/
+
 
 %%% evaluate_label/3: Add a label to knowledge base
 % Label is a reserved word
@@ -225,9 +211,6 @@ resolve_labels([LabelName | List], MemUnresolved, Mem) :-
     resolve_one_label(Rows, LabelName, LabelValue, MemUnresolved, MemNew),
     % Recursivly resolve the rest of the label
     resolve_labels(List, MemNew, Mem).
-
-
-
 %%% resolve_one_label/2: Resolve all values relative to a single label
 resolve_one_label([], _, _, Mem, Mem).
 resolve_one_label([Row | List], LabelName, LabelValue, MemUnresolved, Mem) :-
@@ -247,13 +230,8 @@ lmc_load(Filename, Mem) :-
     read_string(Input, _, OutputString),
     % Convert ouput file string to lowercase
     string_lower(OutputString, OutputStringLower),
-    % Split output file string into a list of rows (Windows and linux support)
-    /*
-    TODO
-    Doesen't work now as it is
-    Windows, linux and mac support for newline.
-    */
-    split_string(OutputStringLower, '\n', '\r', LineList),
+    % Split output string into a list of rows (Unix, Windows and MacOs support)
+    split_string(OutputStringLower, '\n\r', '\n', LineList),
     % Convert assembly programm into machine code starting from line 0
     assembler(LineList, 0, MemUnresolved),
     % Resolve all undefined label

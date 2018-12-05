@@ -5,7 +5,7 @@ LOAD LDA 0
 
     add 5
     LDA LOAD
-    lda paperino
+    lda one
     ADD ONE
     STA LOAD
     BRA LOAD
