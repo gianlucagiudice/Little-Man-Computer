@@ -124,22 +124,22 @@ assembler([Line | _], _, _) :-
     format('Instruction: "~s".\n', [Line]), fail.
 
 
-%%% split_assembly_line/2 split assembly line into a list of single word
+%%% split_assembly_line/2: split assembly line into a list of single word
 split_assembly_line(Line, SplittedLine) :-
     % Remove comment in line.
-    /*
-    Change remove comment
-    */
-    % The char "/" is allowed only in comment so is possible to use split_string
-    split_string(Line, "/", "/", [InstructionNoComment | _]),
-    % Split string using whitespaces
+    string_codes(Line, Codes),
+    remove_comment(Codes, NoComment),
+    string_codes(InstructionNoComment, NoComment),
+    % Split into a list of instruction
     split_string(InstructionNoComment, " \t", " \t", SplittedLine).
-
-
+%%% remove_comment/2: remove comment from a line
+remove_comment([], []).
+remove_comment([CommentChar, CommentChar | _], []) :-
+    string_codes("/", [CommentChar | _]), !.
+remove_comment([T | Ts], [T | Rest]) :- remove_comment(Ts, Rest).
 
 %%% assembler_line/3: Convert a single instruction into machine code.
 % Len = 1
-% [1.a] = Instruction without argument
 assembler_line([Instruction], _, MachineCode) :-
     atom_string(AtomInstruction, Instruction),
     compile_instruction(AtomInstruction, MachineCode), !.
@@ -147,12 +147,10 @@ assembler_line([Instruction], _, MachineCode) :-
 assembler_line([X, Y], _, _) :-
     word_reserverd(X), word_reserverd(Y), !,
     writeln('COMPILE ERROR: Invalid instruction'), fail.
-% [2.c] = Label followed by an instruction without argument
 assembler_line([Label, Instruction], MemPointer, MachineCode) :-
     word_reserverd(Instruction), !,
     evaluate_label(Label, MemPointer, defined_label),
     assembler_line([Instruction], _, MachineCode).
-% [2.a] = Instruction followed by an argument
 assembler_line([Instruction, Argument], MemPointer, MachineCode) :-
     word_reserverd(Instruction),
     atom_string(AtomInstruction, Instruction),
@@ -161,7 +159,6 @@ assembler_line([Instruction, Argument], MemPointer, MachineCode) :-
 assembler_line([X, _, _], _, _) :-
     word_reserverd(X), !,
     writeln('COMPILE ERROR: Invalid instruction'), fail.
-% [3.a] = Label followed by an instruction and its argument
 assembler_line([Label, Instruction, Argument], MemPointer, MachineCode) :-
     word_reserverd(Instruction), !,
     assembler_line([Instruction, Argument], MemPointer, MachineCode),
