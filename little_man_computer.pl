@@ -79,7 +79,7 @@ compile_instruction(brz, Arg, MemPointer, MaC) :-
 compile_instruction(brp, Arg, MemPointer, MaC) :-
     evaluate_label(Arg, MemPointer, undefined_label),
     compile_instruction(brp, "0", _, MaC).
-compile_instruction(dat, MaC, _, MaC) :-
+compile_instruction(dat, MaC, _, X) :-
     number_string(X, MaC), X =< 999, X >= 0.
 compile_instruction(dat, MaC) :- compile_instruction(dat, "0", _, MaC).
 compile_instruction(hlt, 0).
@@ -250,4 +250,4 @@ lmc_load(Filename, FilledMem) :-
     writeln('Msg: Compiled succesfully.'),
     % Fill the memory with 0s
     length(MemResolved, X),
-    fill_memory(MemResolved, X, FilledMem),
+    fill_memory(MemResolved, X, FilledMem).
