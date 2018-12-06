@@ -229,6 +229,8 @@ fill_memory([], OldNumber, [0 | M]) :-
 fill_memory([M | Mem], N, [M | FilledMem]) :-
     fill_memory(Mem, N, FilledMem).
 
+
+
 %%% lmc_load/2: Given a file, return the content of the memory.
 lmc_load(Filename, FilledMem) :-
     % Read the file
