@@ -1,4 +1,9 @@
 # Little-Man-Computer
-Little Man Computer Project
+<h2>Gianluca Giudice</h2>
 
-[embed]http://example.com/file.pdf[/embed]
+<h1>Little Man Computer</h1>
+<h2>Formenti Matteo</h2>
+
+<span>
+  Implementation of "little man computer" by Gianluca Giudice in prolog and common lisp.
+</span>
