@@ -1,16 +1,21 @@
-LOAD LDA 0
-    OUT
-    SUB ONE
+//scemochilegge
+/ciao      Add   1
+ciao'      hlt       //convert_string_atom
+      dat
+      dat   1
+1ciao  dat 999
+      dat 9
+      brz 10
+      inp
+wow   out
+      sub wow
+                //convert_string_atom
 
+ciao  inp
 
+      lda 0
 
-dat add
-    BRZ ONE
-    LDA LOAD
-    ADD ONE
-    STA LOAD
-    BRA LOAD
+      sta 0
 
-
-
-ONE DAT 1
+//ciao //ciao//convert_string_atom
+      dat//convert_string_atom
