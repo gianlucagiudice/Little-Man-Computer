@@ -221,10 +221,20 @@ resolve_one_label([Row | List], LabelName, LabelValue, MemUnresolved, Mem) :-
 
 
 
+% fill-memory/2: Fill the memory with 0s
+fill_memory([], 100, []).
+fill_memory([], OldNumber, [0 | M]) :-
+    NewNumber is OldNumber + 1,
+    fill_memory([], NewNumber, M), !.
+fill_memory([M | Mem], N, [M | FilledMem]) :-
+    fill_memory(Mem, N, FilledMem).
+
 %%% lmc_load/2: Given a file, return the content of the memory.
-lmc_load(Filename, Mem) :-
+lmc_load(Filename, FilledMem) :-
+    % Read the file
     open(Filename, read, Input),
     read_string(Input, _, OutputString),
+    close(Input),
     % Convert ouput file string to lowercase
     string_lower(OutputString, OutputStringLower),
     % Split output string into a list of rows (Unix, Windows and MacOs support)
@@ -233,16 +243,9 @@ lmc_load(Filename, Mem) :-
     assembler(LineList, 0, MemUnresolved),
     % Resolve all undefined label
     findall(X, defined_label(X, _), [_ | DefinedLabelList]),
-    resolve_labels(DefinedLabelList, MemUnresolved, Mem),
+    resolve_labels(DefinedLabelList, MemUnresolved, MemResolved),
     % Compiled succesfully
     writeln('Msg: Compiled succesfully.'),
-
-/*
-% add the last memory cells
-% add the last memory cells
-% add the last memory cells
-
-*/
-
-
-    close(Input).
+    % Fill the memory with 0s
+    length(MemResolved, X),
+    fill_memory(MemResolved, X, FilledMem),
