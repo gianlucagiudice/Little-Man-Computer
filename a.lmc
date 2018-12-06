@@ -2,11 +2,12 @@
 /ciao      Add   1
 ciao'      hlt       //convert_string_atom
       dat
-      dat   1
-1ciao  dat 999
+      dat         1
+wow  dat 999
       dat 9
-      brz 10
+      brz pippo
       inp
+wow dat 4
 wow   out
       sub wow
                 //convert_string_atom
