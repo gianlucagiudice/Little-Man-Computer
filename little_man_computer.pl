@@ -232,7 +232,7 @@ fill_memory([M | Mem], N, [M | FilledMem]) :-
 
 
 %%% lmc_load/2: Given a file, return the content of the memory.
-lmc_load(Filename, FilledMem) :-
+lmc_load(Filename, Mem) :-
     % Read the file
     open(Filename, read, Input),
     read_string(Input, _, OutputString),
@@ -250,4 +250,39 @@ lmc_load(Filename, FilledMem) :-
     writeln('Msg: Compiled succesfully.'),
     % Fill the memory with 0s
     length(MemResolved, X),
-    fill_memory(MemResolved, X, FilledMem).
+    fill_memory(MemResolved, X, Mem).
+
+
+
+%%% lmc_run/3
+lmc_run(Filename, Input, Output) :-
+    lmc_load(Filename, Mem),
+
+%%% one_instruction/2: Given a state return the new State
+one_instruction(State, NewState) :-
+    fail.
+
+
+%%% execution_loop/2
+execution_loop(State, Out) :-
+    fail
+
+
+/*
+
+mc_load(Filename, Mem)
+dove Filename è il nome di un file e Mem è la memoria del sistema nel suo "stato iniziale”.
+Il secondo è un predicato dal nome lmc_run/3 che si preoccupa di leggere un file che
+contiene un codice assembler, lo carica (con lmc_load/2), imposta la coda di input al valore
+fornito e produce un output che è il risultato dell’invocazione di execution_loop/2.
+?- lmc_run(”my/prolog/code/lmc/test-assembly-42.lmc”, [42], Output)
+è un esempio della sua invocazione.
+Suggerimenti
+Per implementare al meglio (ed in modo semplice) il simulatore LMC in Prolog vi consigliamo
+come minimo, di utilizzare il predicato nth0/4.
+Un modo per generare uno “stato” iniziale è di usare il predicato di libreria randseq/3;
+attenzione che il primo argomento non può essere superiore al secondo. Ad esempio:
+?- randseq(99, 99, Mem).
+Mem = [33, 10, 64, 29, 62, 53, 98, 22, 36|...].
+
+*/
