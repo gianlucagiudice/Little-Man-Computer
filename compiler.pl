@@ -1,4 +1,3 @@
-
 valid_arg(Argument, Atom) :-
     number_string(Atom, Argument), Atom =< 99, Atom >= 0.
 %%% compile_instruction/4: Convert an instruction to machine code
