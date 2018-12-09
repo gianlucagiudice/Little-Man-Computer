@@ -1,54 +1,48 @@
-valid_arg(Argument, Atom) :-
-    number_string(Atom, Argument), Atom =< 99, Atom >= 0.
-%%% compile_instruction/4: Convert an instruction to machine code
-% Instruction with numeric argument
-compile_instruction(add, Arg, _, MaC) :-
-    number_string(Atom, Arg), !, Atom =< 99, Atom >= 0, MaC is 100 + Atom.
-compile_instruction(sub, Arg, _, MaC) :-
-    number_string(Atom, Arg), !, Atom =< 99, Atom >= 0, MaC is 200 + Atom.
-compile_instruction(sta, Arg, _, MaC) :-
-    number_string(Atom, Arg), !, Atom =< 99, Atom >= 0, MaC is 300 + Atom.
-compile_instruction(lda, Arg, _, MaC) :-
-    number_string(Atom, Arg), !, Atom =< 99, Atom >= 0, MaC is 500 + Atom.
-compile_instruction(bra, Arg, _, MaC) :-
-    number_string(Atom, Arg), !, Atom =< 99, Atom >= 0, MaC is 600 + Atom.
-compile_instruction(brz, Arg, _, MaC) :-
-    number_string(Atom, Arg), !, Atom =< 99, Atom >= 0, MaC is 700 + Atom.
-compile_instruction(brp, Arg, _, MaC) :-
-    number_string(Atom, Arg), !, Atom =< 99, Atom >= 0, MaC is 800 + Atom.
-% Instruction with label as argument
-compile_instruction(add, Arg, MemPointer, MaC) :-
-    evaluate_label(Arg, MemPointer, undefined_label),
-    compile_instruction(add, "0", _, MaC).
-compile_instruction(sub, Arg, MemPointer, MaC) :-
-    evaluate_label(Arg, MemPointer, undefined_label),
-    compile_instruction(sub, "0", _, MaC).
-compile_instruction(sta, Arg, MemPointer, MaC) :-
-    evaluate_label(Arg, MemPointer, undefined_label),
-    compile_instruction(sta, "0", _, MaC).
-compile_instruction(lda, Arg, MemPointer, MaC) :-
-    evaluate_label(Arg, MemPointer, undefined_label),
-    compile_instruction(lda, "0", _, MaC).
-compile_instruction(bra, Arg, MemPointer, MaC) :-
-    evaluate_label(Arg, MemPointer, undefined_label),
-    compile_instruction(bra, "0", _, MaC).
-compile_instruction(brz, Arg, MemPointer, MaC) :-
-    evaluate_label(Arg, MemPointer, undefined_label),
-    compile_instruction(brz, "0", _, MaC).
-compile_instruction(brp, Arg, MemPointer, MaC) :-
-    evaluate_label(Arg, MemPointer, undefined_label),
-    compile_instruction(brp, "0", _, MaC).
-compile_instruction(dat, MaC, _, X) :-
-    number_string(X, MaC), X =< 999, X >= 0.
-compile_instruction(dat, MaC) :- compile_instruction(dat, "0", _, MaC).
-compile_instruction(hlt, 0).
-compile_instruction(inp, 901).
-compile_instruction(out, 902).
+%%% List of instruction and their machineCode
+instruction(add, 100, _).
+instruction(sub, 200, _).
+instruction(sta, 300, _).
+instruction(lda, 500, _).
+instruction(bra, 600, _).
+instruction(brz, 700, _).
+instruction(brp, 800, _).
+instruction(dat, 0  , _).
+instruction(dat, 0     ).
+instruction(hlt, 0     ).
+instruction(inp, 901   ).
+instruction(out, 902   ).
 
+%%% word_reserved/1: Unify if a word is reserved.
 word_reserverd(Word) :-
-    atom_string(AtomWord, Word), compile_instruction(AtomWord, "0", _, _), !.
+    atom_string(AtomWord, Word), instruction(AtomWord, _, _), !.
 word_reserverd(Word) :-
-    atom_string(AtomWord, Word), compile_instruction(AtomWord, _).
+    atom_string(AtomWord, Word), instruction(AtomWord, _).
+
+
+
+%%% compile_instruction/4_2: Convert an instruction to machine code
+% "dat" is a special instruction
+compile_instruction(dat, MaC, _, X) :-
+    !, number_string(X, MaC), X =< 999, X >= 0.
+% Instructions with numeric arguments
+compile_instruction(Instruction, Arg, _, MaC) :-
+    % If argument is a number then isn't a label
+    number_string(Atom, Arg), !,
+    % Check if argument is valid
+    Atom =< 99, Atom >= 0,
+    % Get the instruction opcode
+    instruction(Instruction, OpCode, _),
+    MaC is OpCode + Atom.
+% Instruction with label as argument
+compile_instruction(Instruction, Arg, MemPointer, MaC) :-
+    % If argument is a label, evaluate the label
+    evaluate_label(Arg, MemPointer, undefined_label),
+    % Then compile the instruction
+    compile_instruction(Instruction, "0", _, MaC), !.
+% Instructions whitout arguments
+compile_instruction(dat, 0) :- !.
+compile_instruction(Instruction, Mac) :- instruction(Instruction, Mac).
+
 
 
 
