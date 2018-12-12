@@ -60,8 +60,8 @@ execute_instruction(7, Arg, State, NewState) :-
     NewPC = Arg,
     % Create the new state
     NewState =.. [StateType, Acc, NewPC, Mem, Input, Out, Flag].
-execute_instruction(7, Arg, State, NewState) :-
-    State =.. [StateType, Acc, _, Mem, Input, Out, Flag],
+execute_instruction(7, _, State, NewState) :-
+    State =.. [StateType, Acc, PC, Mem, Input, Out, Flag],
     % Don't jump, just increment PC by 1
     NewPC = PC + 1,
     % Create the new state
@@ -75,8 +75,8 @@ execute_instruction(8, Arg, State, NewState) :-
     NewPC = Arg,
     % Create the new state
     NewState =.. [StateType, Acc, NewPC, Mem, Input, Out, Flag].
-execute_instruction(8, Arg, State, NewState) :-
-    State =.. [StateType, Acc, _, Mem, Input, Out, Flag],
+execute_instruction(8, _, State, NewState) :-
+    State =.. [StateType, Acc, PC, Mem, Input, Out, Flag],
     % Don't jump, just increment PC by 1
     NewPC = PC + 1,
     % Create the new state
