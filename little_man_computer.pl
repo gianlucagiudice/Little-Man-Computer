@@ -45,7 +45,7 @@ lmc_run(Filename, Input, Out) :-
 
 
 %%% execution_loop/2
-execution_loop(State, Out) :-
+execution_loop(State, _) :-
     one_instruction(State, NewState),
     arg(5, NewState, NewOut),
     execution_loop(NewState, NewOut).
