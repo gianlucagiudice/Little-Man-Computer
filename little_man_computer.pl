@@ -43,38 +43,35 @@ lmc_run(Filename, Input, Out) :-
     execution_loop(State, Out).
 
 
-%%% execution_loop/2
-execution_loop(State, _) :-
-    arg(1, State, StateType),
-    StateType = state,
-    !,
-    one_instruction(State, NewState),
-    arg(5, NewState, NewOut),
-    execution_loop(NewState, NewOut).
 
 %%% execution_loop/2
 execution_loop(State, Out) :-
-    /*
+    one_instruction(State, NewState),
+    arg(5, NewState, NewOut),
+    execution_loop(NewState, NewOut).
+execution_loop(State, Out) :-
+    arg(5, State, Out),
+    writeln("Execution has been completed.").
+    %writeln(Out).
 
-    MOLTO MEGLIO DELLA RIGA SOTTO
-    functor(node(x, _, [], []), F, 4).
-    F = node
-    */
-    State =.. [halted_state | _],
-    write("Halted state raggiunto"),
-    write(Out).
 
 
 %%% one_instruction/2: Given a state return the new State
 one_instruction(State, NewState) :-
+    % If is a "state" go on
+    functor(State, state, 6), !,
+    % Fetch
     arg(4, State, MemList),
     arg(2, State, Pc),
     nth0(Pc, MemList, Mem),
+    % Decode
     OpCode is div(Mem, 100),
     Arg is mod(Mem, 100),
-    execute_instruction(OpCode, Arg, State, NewState),
-    !.
+    % Execute
+    execute_instruction(OpCode, Arg, State, NewState), !.
 
-one_instruction(_, _) :-
-    write("EXECUTION ERROR: Instruction not valid."),
-    fail.
+
+/*
+?- randseq(99, 99, Mem).
+Mem = [33, 10, 64, 29, 62, 53, 98, 22, 36|...].
+*/

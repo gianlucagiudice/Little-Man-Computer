@@ -45,7 +45,6 @@ compile_instruction(Instruction, Mac) :- instruction(Instruction, Mac).
 
 
 
-
 %%% defined_label/2: Label defined in the program. (labelName, MemPointer)
 defined_label('', '').      % Placeholder
 %%% undefined_label/2: Label undefined in the program. (labelName, MemPointer)
@@ -77,6 +76,7 @@ assembler([Line | _], _, _) :-
     format('Instruction: "~s".\n', [Line]), fail.
 
 
+
 %%% split_assembly_line/2: split assembly line into a list of single word
 split_assembly_line(Line, SplittedLine) :-
     % Remove comment in line.
@@ -90,7 +90,6 @@ remove_comment([], []).
 remove_comment([CommentChar, CommentChar | _], []) :-
     string_codes("/", [CommentChar | _]), !.
 remove_comment([T | Ts], [T | Rest]) :- remove_comment(Ts, Rest).
-
 
 
 
