@@ -1,6 +1,5 @@
 /*
 Matr: 830694
-little_man_computer.pl
 Written by: Gianluca Giudice.
 */
 
