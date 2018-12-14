@@ -52,14 +52,15 @@ lmc_run(Filename, Input, Out) :-
 
 
 %%% execution_loop/2
-execution_loop(State, _) :-
-    one_instruction(State, NewState),
-    arg(5, NewState, NewOut),
-    execution_loop(NewState, NewOut), !.
+execution_loop(State, NewOut) :-
+    one_instruction(State, NewState), !,
+    execution_loop(NewState, NewOut).
 execution_loop(State, Out) :-
+    functor(State, halted_state, 6),
     arg(5, State, Out),
     writeln("Msg: Execution has been completed.").
     %writeln(Out).
+
 
 
 %%% one_instruction/2: Given a state return the new State
