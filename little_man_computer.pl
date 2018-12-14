@@ -74,9 +74,3 @@ one_instruction(State, NewState) :-
     Arg is mod(Mem, 100),
     % Execute
     execute_instruction(OpCode, Arg, State, NewState), !.
-
-
-/*
-?- randseq(99, 99, Mem).
-Mem = [33, 10, 64, 29, 62, 53, 98, 22, 36|...].
-*/
