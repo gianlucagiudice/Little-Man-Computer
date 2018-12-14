@@ -1,3 +1,12 @@
+/*
+Matr: 830694
+Written by: Gianluca Giudice.
+*/
+
+%%%% -*- Mode: Prolog -*-
+
+
+
 %%% List of instruction and their machineCode
 instruction(add, 100, _).
 instruction(sub, 200, _).
