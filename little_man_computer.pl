@@ -23,6 +23,8 @@ lmc_load(Filename, Mem) :-
     string_lower(OutputString, OutputStringLower),
     % Split output string into a list of rows (Unix, Windows and MacOs support)
     split_string(OutputStringLower, '\n\r', '\n', LineList),
+    % Assert placeholder labels for compile process
+    assert_labels(),
     % Convert assembly programm into machine code starting from line 0
     assembler(LineList, 0, MemUnresolved),
     % Resolve all undefined label
@@ -74,3 +76,9 @@ one_instruction(State, NewState) :-
     Arg is mod(Mem, 100),
     % Execute
     execute_instruction(OpCode, Arg, State, NewState), !.
+
+
+/*
+TODO: 
+Non va in loop con 100 "dat 101"
+*/

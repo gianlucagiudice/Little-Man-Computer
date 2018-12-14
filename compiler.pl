@@ -21,10 +21,6 @@ instruction(hlt, 0     ).
 instruction(inp, 901   ).
 instruction(out, 902   ).
 
-%%% Label used as placeholder
-defined_label('', '').
-undefined_label('', '').
-
 
 
 %%% word_reserved/1: Unify if a word is reserved.
@@ -60,11 +56,13 @@ compile_instruction(Instruction, Mac) :- instruction(Instruction, Mac).
 
 
 
-%%% reset_labels/2: Reset label to initial state
+%%% reset_labels/0: Reset label to initial state
 reset_labels() :-
     % Retract labels used at compile time
     retractall(defined_label(_, _)),
-    retractall(undefined_label(_, _)),
+    retractall(undefined_label(_, _)).
+%%% assert_labels/0: Assert labels used as placeholder
+assert_labels() :-
     % Assert placeholder labels
     assert(defined_label('', '')),
     assert(undefined_label('', '')).
