@@ -46,7 +46,7 @@ lmc_load(_, _) :-
 %%% lmc_run/3
 lmc_run(Filename, Input, Out) :-
     lmc_load(Filename, Mem),
-    State =.. [state, 0, 0, Mem, Input, Out, noflag],
+    State =.. [state, 0, 0, Mem, Input, [], noflag],
     execution_loop(State, Out).
 
 
@@ -62,13 +62,12 @@ execution_loop(State, Out) :-
     %writeln(Out).
 
 
-
 %%% one_instruction/2: Given a state return the new State
 one_instruction(State, NewState) :-
     % If is a "state" go on
     functor(State, state, 6), !,
     % Fetch
-    arg(4, State, MemList),
+    arg(3, State, MemList),
     arg(2, State, Pc),
     nth0(Pc, MemList, Mem),
     % Decode
@@ -76,9 +75,3 @@ one_instruction(State, NewState) :-
     Arg is mod(Mem, 100),
     % Execute
     execute_instruction(OpCode, Arg, State, NewState), !.
-
-
-/*
-TODO: 
-Non va in loop con 100 "dat 101"
-*/

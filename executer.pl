@@ -124,13 +124,12 @@ execute_instruction(4, _, _, _) :-
 
 %%% evaluate_flag/2: set flag if overflow or underflow 
 evaluate_flag(Acc, NewFlag) :-
-    Acc >= 1000,
+    Acc >= 1000, !,
     NewFlag = flag.
 evaluate_flag(Acc, NewFlag) :-
-    Acc < 0,
+    Acc < 0, !,
     NewFlag = flag.
-evaluate_flag(Acc, NewFlag) :-
-    Acc >= 1000,
+evaluate_flag(_, NewFlag) :-
     NewFlag = noflag.
 
 
@@ -138,7 +137,7 @@ evaluate_flag(Acc, NewFlag) :-
 %%% increment_pc/2: Increment programm counter
 increment_pc(PC, NewPC) :-
     PCinc is PC + 1,
-    NewPC is mod(PCinc, 1000).
+    NewPC is mod(PCinc, 100).
 
 
 

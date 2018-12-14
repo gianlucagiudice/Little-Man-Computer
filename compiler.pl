@@ -201,9 +201,3 @@ fill_memory([], OldNumber, [0 | M]) :-
     fill_memory([], NewNumber, M), !.
 fill_memory([M | Mem], N, [M | FilledMem]) :-
     fill_memory(Mem, N, FilledMem).
-
-
-/*
-    ---------------- TODO ::::
-Retract della base di conoscenza dopo aver compilato
-*/
