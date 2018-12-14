@@ -59,7 +59,6 @@ execution_loop(State, Out) :-
     functor(State, halted_state, 6),
     arg(5, State, Out),
     writeln("Msg: Execution has been completed.").
-    %writeln(Out).
 
 
 
