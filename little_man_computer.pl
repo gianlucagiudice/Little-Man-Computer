@@ -28,11 +28,16 @@ lmc_load(Filename, Mem) :-
     % Resolve all undefined label
     findall(X, defined_label(X, _), [_ | DefinedLabelList]),
     resolve_labels(DefinedLabelList, MemUnresolved, MemResolved),
+    % Reset labels used for compile process
+    reset_labels(),
     % Compiled succesfully
     writeln('Msg: Compiled succesfully.'),
     % Fill the memory with 0s
     length(MemResolved, X),
-    fill_memory(MemResolved, X, Mem).
+    fill_memory(MemResolved, X, Mem), !.
+lmc_load(_, _) :-
+    % If compile fail, reset labels used for compile process and fail
+    reset_labels(), fail.
 
 
 
@@ -48,10 +53,10 @@ lmc_run(Filename, Input, Out) :-
 execution_loop(State, _) :-
     one_instruction(State, NewState),
     arg(5, NewState, NewOut),
-    execution_loop(NewState, NewOut).
+    execution_loop(NewState, NewOut), !.
 execution_loop(State, Out) :-
     arg(5, State, Out),
-    writeln("Execution has been completed.").
+    writeln("Msg: Execution has been completed.").
     %writeln(Out).
 
 

@@ -12,6 +12,12 @@ instruction(hlt, 0     ).
 instruction(inp, 901   ).
 instruction(out, 902   ).
 
+%%% Label used as placeholder
+defined_label('', '').
+undefined_label('', '').
+
+
+
 %%% word_reserved/1: Unify if a word is reserved.
 word_reserverd(Word) :-
     atom_string(AtomWord, Word), instruction(AtomWord, _, _), !.
@@ -45,10 +51,14 @@ compile_instruction(Instruction, Mac) :- instruction(Instruction, Mac).
 
 
 
-%%% defined_label/2: Label defined in the program. (labelName, MemPointer)
-defined_label('', '').      % Placeholder
-%%% undefined_label/2: Label undefined in the program. (labelName, MemPointer)
-undefined_label('', '').    % Placeholder
+%%% reset_labels/2: Reset label to initial state
+reset_labels() :-
+    % Retract labels used at compile time
+    retractall(defined_label(_, _)),
+    retractall(undefined_label(_, _)),
+    % Assert placeholder labels
+    assert(defined_label('', '')),
+    assert(undefined_label('', '')).
 
 
 
@@ -90,6 +100,7 @@ remove_comment([], []).
 remove_comment([CommentChar, CommentChar | _], []) :-
     string_codes("/", [CommentChar | _]), !.
 remove_comment([T | Ts], [T | Rest]) :- remove_comment(Ts, Rest).
+
 
 
 
