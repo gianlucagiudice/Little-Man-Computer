@@ -1,0 +1,15 @@
+LOAD LDA 0
+    OUT
+    SUB ONE
+    BRZ         ONE
+    LDA LOAD \\ ciao come stai ogg
+    ADD ONE
+
+
+
+
+    STA LOAD\\prova di commento
+    BRA LOAD
+ONE DAT 1
+
+
