@@ -12,37 +12,28 @@
     (labels ((read-helper ()
 	      (let ((line (read-line file nil nil)))
 		      (when line 
-            (cons (parse-line line) (read-helper))))))
+            (cons (parse-line (format-line line)) (read-helper))))))
       (read-helper))))
 
 ;; Convert line into a list
 (defun parse-line (line)
-  (labels ((parse-recursively (l) 
+  (labels ((parse-recursively (l)
     (let ((trim-line (string-trim '(#\Space) l)))
       (when (> (length trim-line) 0)
-        (let ((split-position
-                ((lambda (pos trim) (if pos pos (length trim)))
-                  (position #\Space trim-line) trim-line)))
-          (cons
-            (subseq trim-line 0 split-position)
-            (parse-recursively
-              (subseq trim-line split-position (length trim-line)))))))))
-  ; Set up string for parsing
-  (parse-recursively (substitute #\Space #\Tab
-                        (remove-comment
-                          (string-downcase line))))))
+        (let ((split-position ((lambda (pos trim) (if pos pos (length trim)))
+                                (position #\Space trim-line) trim-line)))
+          (cons (subseq trim-line 0 split-position)
+                (parse-recursively
+                  (subseq trim-line split-position (length trim-line)))))))))
+  (if (> (length line) 0) (parse-recursively line) (list ()))))
 
-;(defun format-line (line)
-;  (substitute #\Space #\Tab
-;    (remove-comment (string-downcase line))))
-
-;; Remove comment from line
-(defun remove-comment (line)
-  (let ((comment-position (search "\\" line)))
-    (if comment-position
-      (subseq line 0 comment-position)
-      line)))
-
+; Set up string for parsing
+(defun format-line (line)
+  (labels ((remove-comment (l)
+    (let ((comment-position (search "\\" l)))
+      (if comment-position (subseq l 0 comment-position) l))))
+    (string-trim '(#\Space) (substitute #\Space #\Tab
+                              (remove-comment (string-downcase line))))))
 
 ;; Get instruction opcode and check if accepts argument
 (defun to-opcode (instruction)
