@@ -15,7 +15,7 @@
             (cons (parse-line (format-line line)) (read-helper))))))
       (read-helper))))
 
-;; Convert line into a list
+;; Split line into a list
 (defun parse-line (line)
   (labels ((parse-recursively (l)
     (let ((trim-line (string-trim '(#\Space) l)))
@@ -35,6 +35,11 @@
     (string-trim '(#\Space) (substitute #\Space #\Tab
                               (remove-comment (string-downcase line))))))
 
+;(defun search-labels (line-list)
+;  ((when (car line-list)
+;      
+;      )))
+
 ;; Get instruction opcode and check if accepts argument
 (defun to-opcode (instruction)
   (cond ((equal instruction "add") (values 100  t))
@@ -52,8 +57,11 @@
 
 ;; Given a file, return the content of the memory.
 (defun lmc-load (filename)
-  (read-file filename))
-
+  (let ((line-list (read-file filename)))
+    (let ((labels-list (search-labels line-list)))
+      (write labels-list)
+      )))
+; Se una istruzione è DAT allora faccio un append di 0
 
 ;instruction(add, 100, _).
 ;instruction(sub, 200, _).
