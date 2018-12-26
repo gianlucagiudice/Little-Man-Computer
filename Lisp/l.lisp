@@ -6,39 +6,49 @@
   name
   row)
 
+
 ;; Return the content of a file
 (defun read-file (filename)
   (with-open-file (file filename :direction :input)
     (labels ((read-helper ()
 	      (let ((line (read-line file nil nil)))
-		      (when line 
-            (cons (parse-line (format-line line)) (read-helper))))))
+          ; Read file until the end
+		      (when line
+            ; Add the parsed line but skip if blank 
+           (let ((parsed (parse-line (format-line line))))
+              (if parsed (cons parsed (read-helper)) (read-helper)))))))  
       (read-helper))))
 
-;; Split line into a list
+
+; Split line into a list
 (defun parse-line (line)
   (labels ((parse-recursively (l)
+    ; Trim the spaces
     (let ((trim-line (string-trim '(#\Space) l)))
-      (when (> (length trim-line) 0)
-        (let ((split-position ((lambda (pos trim) (if pos pos (length trim)))
-                                (position #\Space trim-line) trim-line)))
-          (cons (subseq trim-line 0 split-position)
-                (parse-recursively
-                  (subseq trim-line split-position (length trim-line)))))))))
-  (if (> (length line) 0) (parse-recursively line) (list ()))))
+        ; Stop if line is finished
+        (when (> (length trim-line) 0)
+          ; Find the split position
+          (let ((split-position ((lambda (pos trim) (if pos pos (length trim)))
+                                  (position #\Space trim-line) trim-line)))
+            ; Add first word and recursively parse the rest 
+            (cons (subseq trim-line 0 split-position)
+                  (parse-recursively
+                    (subseq trim-line split-position (length trim-line)))))))))
+    ; Set up the line before starting to split
+    (labels ((remove-comment (l)
+      ; Remove the comment from line
+      (let ((comment-position (search "\\" l)))
+        (if comment-position (subseq l 0 comment-position) l))))
+      ; Parse the line recursively
+      (parse-recursively
+        (substitute #\Space #\Tab (remove-comment (string-downcase line)))))))
 
-; Set up string for parsing
-(defun format-line (line)
-  (labels ((remove-comment (l)
-    (let ((comment-position (search "\\" l)))
-      (if comment-position (subseq l 0 comment-position) l))))
-    (string-trim '(#\Space) (substitute #\Space #\Tab
-                              (remove-comment (string-downcase line))))))
 
 ;(defun search-labels (line-list)
 ;  ((when (car line-list)
 ;      
 ;      )))
+
 
 ;; Get instruction opcode and check if accepts argument
 (defun to-opcode (instruction)
@@ -56,22 +66,15 @@
         
 
 ;; Given a file, return the content of the memory.
+;(defun lmc-load (filename)
+;  (let ((line-list (read-file filename)))
+;    (let ((labels-list (search-labels line-list)))
+;      (write labels-list)
+;      )))
+
 (defun lmc-load (filename)
   (let ((line-list (read-file filename)))
-    (let ((labels-list (search-labels line-list)))
-      (write labels-list)
-      )))
-; Se una istruzione è DAT allora faccio un append di 0
+    line-list))
 
-;instruction(add, 100, _).
-;instruction(sub, 200, _).
-;instruction(sta, 300, _).
-;instruction(lda, 500, _).
-;instruction(bra, 600, _).
-;instruction(brz, 700, _).
-;instruction(brp, 800, _).
-;instruction(dat, 0  , _).
-;instruction(dat, 0     ).
-;instruction(hlt, 0     ).
-;instruction(inp, 901   ).
-;instruction(out, 902   ).
+
+; Se una istruzione è DAT allora faccio un append di 0

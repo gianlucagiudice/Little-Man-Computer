@@ -1,4 +1,9 @@
-LOAD LDA 0
+
+
+
+
+
+                        LOAD    LDA 0
     OUT
     SUB ONE
     BRZ         ONE
@@ -8,8 +13,12 @@ LOAD LDA 0
 
 
 
-    STA LOAD\\prova di commento
-    BRA LOAD
+                STA LOAD\\prova di commento
+    BRA             LOAD
+
+
+
+
 ONE DAT 1
 
 
