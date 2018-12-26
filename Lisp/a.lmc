@@ -6,6 +6,8 @@
                         LOAD    LDA 0
     OUT
     SUB ONE
+    \\One sub ONE
+
     BRZ         ONE
     LDA LOAD \\ ciao come stai ogg
     ADD ONE

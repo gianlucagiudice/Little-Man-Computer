@@ -15,7 +15,7 @@
           ; Read file until the end
 		      (when line
             ; Add the parsed line but skip if blank 
-           (let ((parsed (parse-line (format-line line))))
+           (let ((parsed (parse-line line)))
               (if parsed (cons parsed (read-helper)) (read-helper)))))))  
       (read-helper))))
 
@@ -44,11 +44,40 @@
         (substitute #\Space #\Tab (remove-comment (string-downcase line)))))))
 
 
-;(defun search-labels (line-list)
-;  ((when (car line-list)
-;      
-;      )))
+(defun search-labels (line-list row)
+  (when line-list
+    ; Get the first word of an instruction
+    (let ((first-word (first (car line-list))))
+      ; The word is a label if and only if is not a reserver keyword
+      (if (not (to-opcode first-word))
+        ; Add label if is not alredy defined
+        (cons (make-defined-label :name first-word :row row)
+              (search-labels (cdr line-list) (+ row 1)))
+        (search-labels (cdr line-list) (+ row 1))))))
 
+(defun resolve-label (target-label labels-list)
+  (when labels-list
+    ; Return the row where a label is defined
+    (if (equal (defined-label-name (car labels-list)) target-label)
+      (defined-label-row (car labels-list))
+      (resolve-label target-label (cdr labels-list)))))
+
+(defun check-labels (labels-list)
+  (labels ((check-recursively (label labels-list)
+    (when labels-list 
+      ; Return the label if is alredy defined
+      (if (resolve-label (defined-label-name label) labels-list)
+        label
+        (check-recursively (car labels-list) (cdr labels-list))))))
+    (let ((alredy-defined
+            (check-recursively (car labels-list) (cdr labels-list))))
+      (if alredy-defined
+        ; If a label is alredy defined print error and return nil
+        (format t "COMPILE ERROR: Label \"~A\" is alredy defined at row ~A."
+          (defined-label-name alredy-defined)
+          (defined-label-row alredy-defined))
+        ; If no labels is alredy defined everithing is fine
+        T))))
 
 ;; Get instruction opcode and check if accepts argument
 (defun to-opcode (instruction)
@@ -63,18 +92,29 @@
         ((equal instruction "hlt") (values 0    nil))
         ((equal instruction "inp") (values 901  nil))
         ((equal instruction "out") (values 902  nil))))
-        
 
-;; Given a file, return the content of the memory.
-;(defun lmc-load (filename)
-;  (let ((line-list (read-file filename)))
-;    (let ((labels-list (search-labels line-list)))
-;      (write labels-list)
-;      )))
+(defun assembler (line-list defined-labels)
+  (T))
 
+; Given a file, return the content of the memory.
 (defun lmc-load (filename)
   (let ((line-list (read-file filename)))
-    line-list))
+    (format t "~A~%" line-list)
+    ; Searh all labels defined in asembly file
+    (let ((labels-list (search-labels line-list 0)))
+      (format t "~A~%" labels-list)
+      ; Check if labels are defined more than once
+      (when (check-labels labels-list)
+        ; Covert each line into machine code
+        T
+        ))))
+      
 
 
+;(let ((groceries '(eggs bread butter carrots)))
+;   (format t "~{~A~^, ~}.~%" groceries)         ; Prints in uppercase
+;   (format t "~@(~{~A~^, ~}~).~%" groceries))   ; Capitalizes output
+; ;; prints: EGGS, BREAD, BUTTER, CARROTS.
+; ;; prints: Eggs, bread, butter, carrots.
+      
 ; Se una istruzione è DAT allora faccio un append di 0
