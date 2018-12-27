@@ -1,5 +1,5 @@
-;;; defstruct undefined label per le label non definite
-;;; prima di tutto leggo le label e dopo inizio a compilare riga per riga
+;;; Matr: 830694
+;;; Written by: Gianluca Giudice.
 
 ;; Struct for a defined-label
 (defstruct defined-label
@@ -99,6 +99,8 @@
         ((equal instruction "inp") (values 901  nil))
         ((equal instruction "out") (values 902  nil))))
 
+
+;; Convert each line of the programm
 (defun assembler (line-list labels-list)
   (labels ((assembler-line (instruction labels-list)
     (labels ((evaluate-argument (argument)
@@ -152,6 +154,7 @@
           (cons compiled (assembler (cdr line-list) labels-list))
           ; If error occured, compile process fail
           (format t "Instruction: ~@(~{~A~^ ~}~).~%" (car line-list)))))))
+
 
 ; Given a file, return the content of the memory.
 (defun lmc-load (filename)
