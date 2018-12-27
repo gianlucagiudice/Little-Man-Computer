@@ -1,22 +1,18 @@
 
-
-
-
-
-                        LOAD    LDA 0
+ LOAD    LDA 0
     OUT
     SUB ONE
     \\One sub ONE
 
     BRZ         ONE
     LDA LOAD \\ ciao come stai ogg
-    ADD ONE
+    AdD ONE
 
 
 
 
                 STA LOAD\\prova di commento
-    BRA             LOAD
+    BrA             LOAD
 
 
 

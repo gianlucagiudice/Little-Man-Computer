@@ -20,7 +20,7 @@
       (read-helper))))
 
 
-; Split line into a list
+;; Split line into a list
 (defun parse-line (line)
   (labels ((parse-recursively (l)
     ; Trim the spaces
@@ -44,6 +44,7 @@
         (substitute #\Space #\Tab (remove-comment (string-downcase line)))))))
 
 
+;; Search all the labels defined in the assembly file
 (defun search-labels (line-list row)
   (when line-list
     ; Get the first word of an instruction
@@ -55,6 +56,8 @@
               (search-labels (cdr line-list) (+ row 1)))
         (search-labels (cdr line-list) (+ row 1))))))
 
+
+;; Return the row where a target label is defined
 (defun resolve-label (target-label labels-list)
   (when labels-list
     ; Return the row where a label is defined
@@ -62,6 +65,8 @@
       (defined-label-row (car labels-list))
       (resolve-label target-label (cdr labels-list)))))
 
+
+;; Check if all the labels are defined only once
 (defun check-labels (labels-list)
   (labels ((check-recursively (label labels-list)
     (when labels-list 
@@ -79,6 +84,7 @@
         ; If no labels is alredy defined everithing is fine
         T))))
 
+
 ;; Get instruction opcode and check if accepts argument
 (defun to-opcode (instruction)
   (cond ((equal instruction "add") (values 100  t))
@@ -93,28 +99,75 @@
         ((equal instruction "inp") (values 901  nil))
         ((equal instruction "out") (values 902  nil))))
 
-(defun assembler (line-list defined-labels)
-  (T))
+(defun assembler (line-list labels-list)
+  (labels ((assembler-line (instruction labels-list)
+    (labels ((evaluate-argument (argument)
+      (multiple-value-bind
+        ; Check if the argument is a label or a number
+        (value len) (parse-integer argument :junk-allowed t)
+        (if (and (= len (length argument)) (and (>= value 0) (< value 100)))
+          ; If is a valid number return it
+          value
+          ; Else check if is a valid label
+          (let ((resolved (resolve-label argument labels-list)))
+            (if resolved resolved
+              (format t "COMPILE ERROR: Label ~A unefined.~%" argument)))))))
+      ; Evaluate the length of instruction
+    (cond ((= (length instruction) 1)
+            ; DAT is a special instruction: it can either have or not argument
+            (if (equal (first instruction) "dat")
+              ; Standardise DAT instruction
+              (assembler-line (list "dat" "0") labels-list)
+              ; If is not a DAT instruction compile
+              (multiple-value-bind
+                ; Check if is a valid instruction whitout argument
+                (opc has-argument) (to-opcode (first instruction))
+                  (if (and opc (not has-argument))
+                    opc (format t "COMPILE ERROR: Invalid instruction.~%")))))
+          ((= (length instruction) 2)
+            (multiple-value-bind
+              ; Check if is a valid instruction with argument
+              (opc has-argument) (to-opcode (first instruction))
+                ; If length is 2 there are two cases
+                (cond ((and opc has-argument)
+                      ; Simple instruction followed by its argument
+                        (let ((arg (evaluate-argument (second instruction))))
+                          (when arg (+ opc arg))))
+                      ((and (not opc) (not has-argument))
+                      ; Label followed by instruction whitout argument
+                        (assembler-line (cdr instruction) labels-list))
+                      ; Compile Error
+                      (t (format t "COMPILE ERROR: Invalid instruction.~%")))))
+          ((= (length instruction) 3)
+            ; First word must be a label and second and instruction
+            (when (and (not (to-opcode (first instruction)))
+                       (to-opcode (second instruction)))
+              (assembler-line (cdr instruction) labels-list)))
+          (t (format t "COMPILE ERROR: Invalid instruction.~%"))))))
+    ; Compile each instruction
+    (when line-list
+      (let ((compiled (assembler-line (car line-list) labels-list)))
+        (if compiled
+          ; If instruction compiled succesfully continue recursivly
+          (cons compiled (assembler (cdr line-list) labels-list))
+          ; If error occured, compile process fail
+          (format t "Instruction: ~@(~{~A~^ ~}~).~%" (car line-list)))))))
 
 ; Given a file, return the content of the memory.
 (defun lmc-load (filename)
   (let ((line-list (read-file filename)))
-    (format t "~A~%" line-list)
-    ; Searh all labels defined in asembly file
-    (let ((labels-list (search-labels line-list 0)))
-      (format t "~A~%" labels-list)
-      ; Check if labels are defined more than once
-      (when (check-labels labels-list)
-        ; Covert each line into machine code
-        T
-        ))))
-      
+    ; Control memeory overflow
+    (if (<= (length line-list) 100)
+      ; Searh all labels defined in asembly file 
+      (let ((labels-list (search-labels line-list 0)))
+          ; Check if labels are defined more than once
+          (when (check-labels labels-list)
+            ; Compile each line
+            (let ((mem (assembler line-list labels-list)))
+              (when (= (length mem) (length line-list))
+                ; Each line has been compiled
+                ;(write "Msg: Compiled succesfully.")
+                (format t "Msg: Compiled succesfully.~%") mem))))
+      ; Memory overflow
+      (format t "COMPILE ERROR: Too many instructions to load in memory.~%"))))
 
-
-;(let ((groceries '(eggs bread butter carrots)))
-;   (format t "~{~A~^, ~}.~%" groceries)         ; Prints in uppercase
-;   (format t "~@(~{~A~^, ~}~).~%" groceries))   ; Capitalizes output
-; ;; prints: EGGS, BREAD, BUTTER, CARROTS.
-; ;; prints: Eggs, bread, butter, carrots.
-      
-; Se una istruzione è DAT allora faccio un append di 0
