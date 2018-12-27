@@ -169,8 +169,10 @@
             (let ((mem (assembler line-list labels-list)))
               (when (= (length mem) (length line-list))
                 ; Each line has been compiled
-                ;(write "Msg: Compiled succesfully.")
-                (format t "Msg: Compiled succesfully.~%") mem))))
+                (format t "Msg: Compiled succesfully.~%")
+                ; Fill the memory whit 0s
+                (append mem
+                  (make-list (- 100 (length mem)) :initial-element '0))))))
       ; Memory overflow
       (format t "COMPILE ERROR: Too many instructions to load in memory.~%"))))
 
