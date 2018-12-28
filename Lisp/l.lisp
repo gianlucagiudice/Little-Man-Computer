@@ -176,6 +176,7 @@
       ; Memory overflow
       (format t "COMPILE ERROR: Too many instructions to load in memory.~%"))))
 
+; Given a state return the new state
 (defun one-instruction (state)
   ; If is a "state" continue
   (when (eq (car state) 'STATE)
@@ -285,10 +286,22 @@
                         ; Increment the PC
                         (set-element :pc (increment-pc (get-element :pc)))
                         ; Return the state
-                        state)
+                        state))
                   ; HLT
                   ((= opc 0) (cons 'halted-state (cdr state)))
                   ; ERROR
                   (t (format t "RUNTIME ERROR: Instruction not valid.")))))))
         ; Execute instruction pointed by the program counter
         (execute-instruction (nth (get-element :PC) (get-element :MEM)))))))
+
+
+; Execute until the end
+(defun execution-loop (state)
+  (when state
+    (if (eq (car state) 'state)
+      ; Recursivly continue if state
+      (execution-loop (one-instruction state))
+      ; Hatled state reached
+      (progn
+        (format t "Msg: Execution has been completed.")
+        (nth 10 state)))))
