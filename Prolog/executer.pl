@@ -95,7 +95,7 @@ execute_instruction(8, _, State, NewState) :-
 execute_instruction(9, 01 , State, _) :-
     arg(4, State, Input),
     Input = [], !,
-    writeln("EXECUTION ERROR: Trying to read empty input list"), fail.
+    writeln("RUNTIME ERROR: Trying to read empty input list"), fail.
 execute_instruction(9, 01 , State, NewState) :-
     State =.. [StateType, _, PC, Mem, [I | Input], Out, Flag],
     % Increment the PC
@@ -118,7 +118,7 @@ execute_instruction(0, _, State, NewState) :-
     NewState =.. [halted_state, Acc, PC, Mem, Input, Out, Flag].
 % error
 execute_instruction(_, _, _, _) :-
-    writeln("EXECUTION ERROR: Instruction not valid."),
+    writeln("RUNTIME ERROR: Instruction not valid."),
     fail.
 
 

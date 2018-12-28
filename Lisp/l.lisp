@@ -252,14 +252,43 @@
                       state))
                   ; BRP instruction
                   ((= opc 8)
-                    (write 2))
-                  ; INP/OUT instruction
-                  ((= opc 9)
-                    (write 2))
+                    (progn
+                      (if (eq (get-element :flag) 'noflag)
+                          ; If conditions satisfied jump
+                          (set-element :pc arg)
+                          ; Else increment the PC
+                          (set-element :pc (increment-pc (get-element :pc))))
+                      ; Return the state
+                      state))
+                  ; INP instruction
+                  ((and (= opc 9) (= arg 01))
+                    (if (null (get-element :in))
+                      ; Empty input list
+                      (format t
+                        "RUNTIME ERROR: Trying to read empty input list")
+                      ; Execute input instruction
+                      (progn
+                        ; Load the first element of input in acc
+                        (set-element :acc (car (get-element :in)))
+                        ; Remove the first element of input
+                        (set-element :in (cdr (get-element :in)))
+                        ; Increment the PC
+                        (set-element :pc (increment-pc (get-element :pc)))
+                        ; Return the state
+                        state)))
+                  ; OUT instruction
+                  ((and (= opc 9) (= arg 02))
+                    (progn
+                        ; Append acc value to out list
+                        (set-element :out
+                          (append (get-element :in) (get-element :out)))
+                        ; Increment the PC
+                        (set-element :pc (increment-pc (get-element :pc)))
+                        ; Return the state
+                        state)
+                  ; HLT
+                  ((= opc 0) (cons 'halted-state (cdr state)))
                   ; ERROR
-                  ((= opc 0)
-                    (write 2))
-                  (t (write 2)))))))
-
+                  (t (format t "RUNTIME ERROR: Instruction not valid.")))))))
         ; Execute instruction pointed by the program counter
         (execute-instruction (nth (get-element :PC) (get-element :MEM)))))))
