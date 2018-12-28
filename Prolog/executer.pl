@@ -48,6 +48,7 @@ execute_instruction(3, Arg, State, NewState) :-
 % lda
 execute_instruction(5, Arg, State, NewState) :-
     State =.. [StateType, _, PC, Mem, Input, Out, Flag],
+    % Load Acc from Memory
     nth0(Arg, Mem, NewAcc),
     % Increment the PC
     increment_pc(PC, NewPC),
@@ -116,7 +117,7 @@ execute_instruction(0, _, State, NewState) :-
     % Change state to halted_state the new state
     NewState =.. [halted_state, Acc, PC, Mem, Input, Out, Flag].
 % error
-execute_instruction(4, _, _, _) :-
+execute_instruction(_, _, _, _) :-
     writeln("EXECUTION ERROR: Instruction not valid."),
     fail.
 

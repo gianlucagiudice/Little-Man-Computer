@@ -1,10 +1,6 @@
 LOAD LDA 0
     OUT
     SUB ONE
-
-
-    
-
     BRZ ONE
     LDA LOAD
     ADD ONE

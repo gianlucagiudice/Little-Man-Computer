@@ -64,7 +64,7 @@ execution_loop(State, Out) :-
 
 %%% one_instruction/2: Given a state return the new State
 one_instruction(State, NewState) :-
-    % If is a "state" go on
+    % If is a "state" continue
     functor(State, state, 6), !,
     % Fetch
     arg(3, State, MemList),

@@ -7,6 +7,7 @@ LOAD LDA 0
     LDA LOAD
     lda one
     ADD ONE
+    dat 401
     STA LOAD
     BRA LOAD
 

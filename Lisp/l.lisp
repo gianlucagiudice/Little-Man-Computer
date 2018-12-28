@@ -102,7 +102,7 @@
 
 ;; Convert each line of the programm
 (defun assembler (line-list labels-list)
-  (labels ((assembler-line (instruction labels-list)
+  (labels ((assembler-line (instruction)
     (labels ((evaluate-argument (argument)
       (multiple-value-bind
         ; Check if the argument is a label or a number
@@ -114,12 +114,12 @@
           (let ((resolved (resolve-label argument labels-list)))
             (if resolved resolved
               (format t "COMPILE ERROR: Label ~A unefined.~%" argument)))))))
-      ; Evaluate the length of instruction
+    ; Evaluate the length of instruction
     (cond ((= (length instruction) 1)
             ; DAT is a special instruction: it can either have or not argument
             (if (equal (first instruction) "dat")
               ; Standardise DAT instruction
-              (assembler-line (list "dat" "0") labels-list)
+              (assembler-line (list "dat" "0"))
               ; If is not a DAT instruction compile
               (multiple-value-bind
                 ; Check if is a valid instruction whitout argument
@@ -137,18 +137,18 @@
                           (when arg (+ opc arg))))
                       ((and (not opc) (not has-argument))
                       ; Label followed by instruction whitout argument
-                        (assembler-line (cdr instruction) labels-list))
+                        (assembler-line (cdr instruction)))
                       ; Compile Error
                       (t (format t "COMPILE ERROR: Invalid instruction.~%")))))
           ((= (length instruction) 3)
             ; First word must be a label and second and instruction
             (when (and (not (to-opcode (first instruction)))
                        (to-opcode (second instruction)))
-              (assembler-line (cdr instruction) labels-list)))
+              (assembler-line (cdr instruction))))
           (t (format t "COMPILE ERROR: Invalid instruction.~%"))))))
     ; Compile each instruction
     (when line-list
-      (let ((compiled (assembler-line (car line-list) labels-list)))
+      (let ((compiled (assembler-line (car line-list))))
         (if compiled
           ; If instruction compiled succesfully continue recursivly
           (cons compiled (assembler (cdr line-list) labels-list))
@@ -176,3 +176,90 @@
       ; Memory overflow
       (format t "COMPILE ERROR: Too many instructions to load in memory.~%"))))
 
+(defun one-instruction (state)
+  ; If is a "state" continue
+  (when (eq (car state) 'STATE)
+    ; Getter and setter for state
+    (labels ((get-element (element)
+                (nth (+ (position element state) 1) state))
+              (set-element (element new)
+                (setf (nth (+ (position element state) 1) state) new)))
+      (labels ((execute-instruction (machine-code)
+        (multiple-value-bind (opc arg) (floor machine-code 100)
+          (labels ((evaluate-flag (acc)
+                      (if (or (>= acc 1000) (< acc 0)) 'flag 'noflag))
+                   (increment-pc (pc) (mod (+ pc 1) 100)))
+            (cond
+                  ; ADD instruction
+                  ((= opc 1)
+                    (progn
+                      ; Evaluate ADD
+                      (set-element :acc
+                        (+ (get-element :acc) (nth arg (get-element :mem))))
+                      ; Set the flag
+                      (set-element :flag (evaluate-flag (get-element :acc)))
+                      ; Increment the PC
+                      (set-element :pc (increment-pc (get-element :pc)))
+                      ; Return the state
+                      state))
+                  ; SUB instruction
+                  ((= opc 2)
+                    (progn
+                      ; Evaluate SUB
+                      (set-element :acc
+                        (- (get-element :acc) (nth arg (get-element :mem))))
+                      ; Set the flag
+                      (set-element :flag (evaluate-flag (get-element :acc)))
+                      ; Increment the PC
+                      (set-element :pc (increment-pc (get-element :pc)))
+                      ; Return the state
+                      state))
+                  ; STA instruction
+                  ((= opc 3)
+                    (progn
+                      ; Store the acc in memory
+                      (setf (nth arg (get-element :mem)) (get-element :acc))
+                      ; Increment the PC
+                      (set-element :pc (increment-pc (get-element :pc)))
+                      ; Return the state
+                      state))
+                  ; LDA instruction
+                  ((= opc 5)
+                    (progn
+                      ; Load Acc from Memory
+                      (set-element :acc (nth arg (get-element :mem)))
+                      ; Increment the PC
+                      (set-element :pc (increment-pc (get-element :pc)))
+                      ; Return the state
+                      state))
+                  ; BRA instruction
+                  ((= opc 6)
+                    (progn
+                      ; Jump
+                      (set-element :pc arg)
+                      ; Return the state
+                      state))
+                  ; BRZ instruction
+                  ((= opc 7)
+                    (progn
+                      (if (and (= (get-element :acc) 0)
+                               (eq (get-element :flag) 'noflag))
+                          ; If conditions satisfied jump
+                          (set-element :pc arg)
+                          ; Else increment the PC
+                          (set-element :pc (increment-pc (get-element :pc))))
+                      ; Return the state
+                      state))
+                  ; BRP instruction
+                  ((= opc 8)
+                    (write 2))
+                  ; INP/OUT instruction
+                  ((= opc 9)
+                    (write 2))
+                  ; ERROR
+                  ((= opc 0)
+                    (write 2))
+                  (t (write 2)))))))
+
+        ; Execute instruction pointed by the program counter
+        (execute-instruction (nth (get-element :PC) (get-element :MEM)))))))
