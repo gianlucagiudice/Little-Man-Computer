@@ -1,6 +1,7 @@
 ;;; Matr: 830694
 ;;; Written by: Gianluca Giudice.
 
+
 ;; Struct for a defined-label
 (defstruct defined-label
   name
@@ -37,7 +38,7 @@
     ; Set up the line before starting to split
     (labels ((remove-comment (l)
       ; Remove the comment from line
-      (let ((comment-position (search "\\" l)))
+      (let ((comment-position (search "//" l)))
         (if comment-position (subseq l 0 comment-position) l))))
       ; Parse the line recursively
       (parse-recursively
@@ -50,7 +51,7 @@
     ; Get the first word of an instruction
     (let ((first-word (first (car line-list))))
       ; The word is a label if and only if is not a reserver keyword
-      (if (not (to-opcode first-word))
+      (if (not (is-reserved first-word))
         ; Add label if is not alredy defined
         (cons (make-defined-label :name first-word :row row)
               (search-labels (cdr line-list) (+ row 1)))
@@ -85,67 +86,79 @@
         T))))
 
 
-;; Get instruction opcode and check if accepts argument
-(defun to-opcode (instruction)
-  (cond ((equal instruction "add") (values 100  t))
-        ((equal instruction "sub") (values 200  t))
-        ((equal instruction "sta") (values 300  t))
-        ((equal instruction "lda") (values 500  t))
-        ((equal instruction "bra") (values 600  t))
-        ((equal instruction "brz") (values 700  t))
-        ((equal instruction "brp") (values 800  t))
-        ((equal instruction "dat") (values 0    t))
-        ((equal instruction "hlt") (values 0    nil))
-        ((equal instruction "inp") (values 901  nil))
-        ((equal instruction "out") (values 902  nil))))
+;; Return compiled instruction and true if keyword is reserved
+(defun to-opcode (instruction &optional (argument nil))
+  (labels ((evaluate-argument (arg &optional (limit 100))
+            (multiple-value-bind
+                ; Check if the argument is a number
+                (value len) (parse-integer arg :junk-allowed t)
+                  (when (= len (length arg))
+                    ; If is a valid number return it
+                    (when (and (>= value 0) (< value limit)) value))))
+          (evaluate-instruction (opcode)
+            (when argument 
+                (let ((evaluated (evaluate-argument argument)))
+                  (when evaluated (+ evaluated opcode))))))
+      (cond ((equal instruction "add")
+              (values (evaluate-instruction 100) t))
+            ((equal instruction "sub")
+              (values (evaluate-instruction 200) t))
+            ((equal instruction "sta")
+              (values (evaluate-instruction 300) t))
+            ((equal instruction "lda")
+              (values (evaluate-instruction 500) t))
+            ((equal instruction "bra")
+              (values (evaluate-instruction 600) t))
+            ((equal instruction "brz")
+              (values (evaluate-instruction 700) t))
+            ((equal instruction "brp")
+              (values (evaluate-instruction 800) t))
+            ((equal instruction "dat")
+              (values 
+                (if argument
+                  (let ((evaluated (evaluate-argument argument 1000)))
+                    (when evaluated evaluated)) 0) t))
+            ((equal instruction "hlt") (values (unless argument 0) t))
+            ((equal instruction "inp") (values (unless argument 901) t))
+            ((equal instruction "out") (values (unless argument 902) t))
+            ; The word is not reserved to compiler
+            (t (values nil nil)))))
+
+
+;; Return if a word is reserved to compiler without evaluate opcode
+(defun is-reserved (word)
+  (multiple-value-bind (compiled reserved) (to-opcode word) reserved))
 
 
 ;; Convert each line of the programm
 (defun assembler (line-list labels-list)
   (labels ((assembler-line (instruction)
-    (labels ((evaluate-argument (argument)
-      (multiple-value-bind
-        ; Check if the argument is a label or a number
-        (value len) (parse-integer argument :junk-allowed t)
-        (if (and (= len (length argument)) (and (>= value 0) (< value 100)))
-          ; If is a valid number return it
-          value
-          ; Else check if is a valid label
-          (let ((resolved (resolve-label argument labels-list)))
-            (if resolved resolved
-              (format t "COMPILE ERROR: Label ~A unefined.~%" argument)))))))
     ; Evaluate the length of instruction
     (cond ((= (length instruction) 1)
-            ; DAT is a special instruction: it can either have or not argument
-            (if (equal (first instruction) "dat")
-              ; Standardise DAT instruction
-              (assembler-line (list "dat" "0"))
-              ; If is not a DAT instruction compile
-              (multiple-value-bind
-                ; Check if is a valid instruction whitout argument
-                (opc has-argument) (to-opcode (first instruction))
-                  (if (and opc (not has-argument))
-                    opc (format t "COMPILE ERROR: Invalid instruction.~%")))))
+            (let ((op (to-opcode (first instruction) (second instruction))))
+              (if op op (format t "COMPILE ERROR: Invalid instruction.~%"))))
           ((= (length instruction) 2)
-            (multiple-value-bind
-              ; Check if is a valid instruction with argument
-              (opc has-argument) (to-opcode (first instruction))
-                ; If length is 2 there are two cases
-                (cond ((and opc has-argument)
-                      ; Simple instruction followed by its argument
-                        (let ((arg (evaluate-argument (second instruction))))
-                          (when arg (+ opc arg))))
-                      ((and (not opc) (not has-argument))
-                      ; Label followed by instruction whitout argument
-                        (assembler-line (cdr instruction)))
-                      ; Compile Error
-                      (t (format t "COMPILE ERROR: Invalid instruction.~%")))))
-          ((= (length instruction) 3)
-            ; First word must be a label and second and instruction
-            (when (and (not (to-opcode (first instruction)))
-                       (to-opcode (second instruction)))
+            (if (is-reserved (first instruction))
+              ; Compile the instruction
+              (let ((op (to-opcode (first instruction) (second instruction))))
+                (if op op
+                  ; Try to resolve label
+                  ;(when (second instruction)
+                  (let ((resolved
+                          (resolve-label (second instruction) labels-list)))
+                    (if resolved
+                      (assembler-line
+                        (list (first instruction) (write-to-string resolved)))
+                      (format t "COMPILE ERROR: Label \"~A\" unefined.~%"
+                        (second instruction))))))
+              ; Skip the label
               (assembler-line (cdr instruction))))
-          (t (format t "COMPILE ERROR: Invalid instruction.~%"))))))
+          ((= (length instruction) 3)
+            (if (and (not (is-reserved (first instruction)))
+                          (is-reserved (second instruction)))
+              (assembler-line (cdr instruction))
+              (format t "COMPILE ERROR: Invalid instruction.~%")))
+          (t (format t "COMPILE ERROR: Invalid instruction.~%")))))
     ; Compile each instruction
     (when line-list
       (let ((compiled (assembler-line (car line-list))))
@@ -164,7 +177,7 @@
       ; Searh all labels defined in asembly file 
       (let ((labels-list (search-labels line-list 0)))
           ; Check if labels are defined more than once
-          (when (check-labels labels-list)
+          (when (check-labels labels-list)            
             ; Compile each line
             (let ((mem (assembler line-list labels-list)))
               (when (= (length mem) (length line-list))
@@ -175,6 +188,7 @@
                   (make-list (- 100 (length mem)) :initial-element '0))))))
       ; Memory overflow
       (format t "COMPILE ERROR: Too many instructions to load in memory.~%"))))
+
 
 ; Given a state return the new state
 (defun one-instruction (state)
@@ -282,7 +296,7 @@
                     (progn
                         ; Append acc value to out list
                         (set-element :out
-                          (append (get-element :in) (get-element :out)))
+                          (append (get-element :out) (list (get-element :acc))))
                         ; Increment the PC
                         (set-element :pc (increment-pc (get-element :pc)))
                         ; Return the state
@@ -302,6 +316,16 @@
       ; Recursivly continue if state
       (execution-loop (one-instruction state))
       ; Hatled state reached
+      ;;; DA CAMBIARE
       (progn
         (format t "Msg: Execution has been completed.")
-        (nth 10 state)))))
+        (let ((out (nth 10 state)))
+          ; Retrun output list or true if empty
+          (if out out t))))))
+
+
+; Run an assembly file
+(defun lmc-run (filename input)
+  (execution-loop (list 'state
+                        :acc 0 :pc 0 :mem (lmc-load filename)
+                        :in input :out '() :flag 'noflag)))
