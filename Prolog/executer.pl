@@ -8,115 +8,115 @@ Written by: Gianluca Giudice.
 
 
 %%% execute_instruction/4: Execute a single instruction
-% add
+%% add
 execute_instruction(1, Arg, State, NewState) :-
     State =.. [StateType, Acc, PC, Mem, Input, Out, _],
-    % Get target memory cell
+    %% Get target memory cell
     nth0(Arg, Mem, Cell),
-    % Execute add
+    %% Execute add
     EvaluateAcc is Acc + Cell,
-    % Set the flag
+    %% Set the flag
     evaluate_flag(EvaluateAcc, NewFlag),
     NewAcc is mod(EvaluateAcc, 1000),
-    % Increment the PC
+    %% Increment the PC
     increment_pc(PC, NewPC),
-    % Create the new state
+    %% Create the new state
     NewState =.. [StateType, NewAcc, NewPC, Mem, Input, Out, NewFlag].
-% sub
+%% sub
 execute_instruction(2, Arg, State, NewState) :-
     State =.. [StateType, Acc, PC, Mem, Input, Out, _],
-    % Get target memory cell
+    %% Get target memory cell
     nth0(Arg, Mem, Cell),
-    % Execute sub
+    %% Execute sub
     EvaluateAcc is Acc - Cell,
-    % Set the flag
+    %% Set the flag
     evaluate_flag(EvaluateAcc, NewFlag),
     NewAcc is mod(EvaluateAcc, 1000),
-    % Increment the PC
+    %% Increment the PC
     increment_pc(PC, NewPC),
-    % Create the new state
+    %% Create the new state
     NewState =.. [StateType, NewAcc, NewPC, Mem, Input, Out, NewFlag].
-% sta
+%% sta
 execute_instruction(3, Arg, State, NewState) :-
     State =.. [StateType, Acc, PC, Mem, Input, Out, Flag],
-    % Store the Acc value in memory
+    %% Store the Acc value in memory
     replace_pos(Mem, Arg, Acc, NewMem),
-    % Increment the PC
+    %% Increment the PC
     increment_pc(PC, NewPC),
-    % Create the new state
+    %% Create the new state
     NewState =.. [StateType, Acc, NewPC, NewMem, Input, Out, Flag].
-% lda
+%% lda
 execute_instruction(5, Arg, State, NewState) :-
     State =.. [StateType, _, PC, Mem, Input, Out, Flag],
-    % Load Acc from Memory
+    %% Load Acc from Memory
     nth0(Arg, Mem, NewAcc),
-    % Increment the PC
+    %% Increment the PC
     increment_pc(PC, NewPC),
-    % Create the new state
+    %% Create the new state
     NewState =.. [StateType, NewAcc, NewPC, Mem, Input, Out, Flag].
-% bra
+%% bra
 execute_instruction(6, Arg, State, NewState) :-
     State =.. [StateType, Acc, _, Mem, Input, Out, Flag],
-    % Jump
+    %% Jump
     NewPC = Arg,
-    % Create the new state
+    %% Create the new state
     NewState =.. [StateType, Acc, NewPC, Mem, Input, Out, Flag].
-% brz
+%% brz
 execute_instruction(7, Arg, State, NewState) :-
     State =.. [StateType, Acc, _, Mem, Input, Out, Flag],
-    % Brz condition
+    %% Brz condition
     Acc = 0, Flag = noflag, !,
-    % Jump
+    %% Jump
     NewPC = Arg,
-    % Create the new state
+    %% Create the new state
     NewState =.. [StateType, Acc, NewPC, Mem, Input, Out, Flag].
 execute_instruction(7, _, State, NewState) :-
     State =.. [StateType, Acc, PC, Mem, Input, Out, Flag],
-    % Don't jump, just increment PC by 1
+    %% Don't jump, just increment PC by 1
     increment_pc(PC, NewPC),
-    % Create the new state
+    %% Create the new state
     NewState =.. [StateType, Acc, NewPC, Mem, Input, Out, Flag].
-% brp
+%% brp
 execute_instruction(8, Arg, State, NewState) :-
     State =.. [StateType, Acc, _, Mem, Input, Out, Flag],
-    % Brp condition
+    %% Brp condition
     Flag = noflag, !,
-    % Jump
+    %% Jump
     NewPC = Arg,
-    % Create the new state
+    %% Create the new state
     NewState =.. [StateType, Acc, NewPC, Mem, Input, Out, Flag].
 execute_instruction(8, _, State, NewState) :-
     State =.. [StateType, Acc, PC, Mem, Input, Out, Flag],
-    % Don't jump, just increment PC by 1
+    %% Don't jump, just increment PC by 1
     increment_pc(PC, NewPC),
-    % Create the new state
+    %% Create the new state
     NewState =.. [StateType, Acc, NewPC, Mem, Input, Out, Flag].
-% inp
+%% inp
 execute_instruction(9, 01 , State, _) :-
     arg(4, State, Input),
     Input = [], !,
     writeln("RUNTIME ERROR: Trying to read empty input list"), fail.
 execute_instruction(9, 01 , State, NewState) :-
     State =.. [StateType, _, PC, Mem, [I | Input], Out, Flag],
-    % Increment the PC
+    %% Increment the PC
     increment_pc(PC, NewPC),
-    % Create the new state    
+    %% Create the new state    
     NewState =.. [StateType, I, NewPC, Mem, Input, Out, Flag].
-% out
+%% out
 execute_instruction(9, 02 , State, NewState) :-
     State =.. [StateType, Acc, PC, Mem, Input, Out, Flag],
-    % Increment the PC
+    %% Increment the PC
     increment_pc(PC, NewPC),
-    % Append Acc to Out list
+    %% Append Acc to Out list
     append_element(Acc, Out, NewOut),
-    % Create the new state    
+    %% Create the new state    
     NewState =.. [StateType, Acc, NewPC, Mem, Input, NewOut, Flag].
-% hlt
+%% hlt
 execute_instruction(0, _, State, NewState) :-
     State =.. [_, Acc, PC, Mem, Input, Out, Flag],
-    % Change state to halted_state the new state
+    %% Change state to halted_state the new state
     NewState =.. [halted_state, Acc, PC, Mem, Input, Out, Flag].
-% error
+%% error
 execute_instruction(_, _, _, _) :-
     writeln("RUNTIME ERROR: Instruction not valid."),
     fail.

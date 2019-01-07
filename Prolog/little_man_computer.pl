@@ -15,30 +15,30 @@ Written by: Gianluca Giudice.
 
 %%% lmc_load/2: Given a file, return the content of the memory.
 lmc_load(Filename, Mem) :-
-    % Read the file
+    %% Read the file
     open(Filename, read, Input),
     read_string(Input, _, OutputString),
     close(Input),
-    % Convert ouput file string to lowercase
+    %% Convert ouput file string to lowercase
     string_lower(OutputString, OutputStringLower),
-    % Split output string into a list of rows (Unix, Windows and MacOs support)
+    %% Split output string into a list of rows (Unix, Windows and MacOs support)
     split_string(OutputStringLower, '\n\r', '\n', LineList),
-    % Assert placeholder labels for compile process
+    %% Assert placeholder labels for compile process
     assert_labels(),
-    % Convert assembly programm into machine code starting from line 0
+    %% Convert assembly programm into machine code starting from line 0
     assembler(LineList, 0, MemUnresolved),
-    % Resolve all undefined label
+    %% Resolve all undefined label
     findall(X, defined_label(X, _), [_ | DefinedLabelList]),
     resolve_labels(DefinedLabelList, MemUnresolved, MemResolved),
-    % Reset labels used for compile process
+    %% Reset labels used for compile process
     reset_labels(),
-    % Compiled succesfully
+    %% Compiled succesfully
     writeln('Msg: Compiled succesfully.'),
-    % Fill the memory with 0s
+    %% Fill the memory with 0s
     length(MemResolved, X),
     fill_memory(MemResolved, X, Mem), !.
 lmc_load(_, _) :-
-    % If compile fail, reset labels used for compile process and fail
+    %% If compile fail, reset labels used for compile process and fail
     reset_labels(), fail.
 
 
@@ -64,14 +64,14 @@ execution_loop(State, Out) :-
 
 %%% one_instruction/2: Given a state return the new state
 one_instruction(State, NewState) :-
-    % If is a "state" continue
+    %% If is a "state" continue
     functor(State, state, 6), !,
-    % Fetch
+    %% Fetch
     arg(3, State, MemList),
     arg(2, State, Pc),
     nth0(Pc, MemList, Mem),
-    % Decode
+    %% Decode
     OpCode is div(Mem, 100),
     Arg is mod(Mem, 100),
-    % Execute
+    %% Execute
     execute_instruction(OpCode, Arg, State, NewState), !.
