@@ -117,8 +117,10 @@ execute_instruction(0, _, State, NewState) :-
     %% Change state to halted_state the new state
     NewState =.. [halted_state, Acc, PC, Mem, Input, Out, Flag].
 %% error
-execute_instruction(_, _, _, _) :-
-    writeln("RUNTIME ERROR: Instruction not valid."),
+execute_instruction(Opc, Arg, _, _) :-
+    Mac is Opc * 100,
+    Instruction is Mac + Arg,
+    format("RUNTIME ERROR: Instruction ~w not valid.~n", [Instruction]),
     fail.
 
 
