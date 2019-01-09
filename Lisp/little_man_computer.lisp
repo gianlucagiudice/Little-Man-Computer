@@ -202,7 +202,8 @@
         (multiple-value-bind (opc arg) (floor machine-code 100)
           (labels ((evaluate-flag (acc)
                       (if (or (>= acc 1000) (< acc 0)) 'flag 'noflag))
-                   (increment-pc (pc) (mod (+ pc 1) 100)))
+                   (increment-pc ()
+                    (set-element :pc (mod (+ (get-element :pc) 1) 100))))
             (cond
                   ;; ADD instruction
                   ((= opc 1)
@@ -213,7 +214,7 @@
                       ;; Set the flag
                       (set-element :flag (evaluate-flag (get-element :acc)))
                       ;; Increment the PC
-                      (set-element :pc (increment-pc (get-element :pc)))
+                      (increment-pc)
                       ;; Return the state
                       state))
                   ;; SUB instruction
@@ -225,7 +226,7 @@
                       ;; Set the flag
                       (set-element :flag (evaluate-flag (get-element :acc)))
                       ;; Increment the PC
-                      (set-element :pc (increment-pc (get-element :pc)))
+                      (increment-pc)
                       ;; Return the state
                       state))
                   ;; STA instruction
@@ -234,7 +235,7 @@
                       ;; Store the acc in memory
                       (setf (nth arg (get-element :mem)) (get-element :acc))
                       ;; Increment the PC
-                      (set-element :pc (increment-pc (get-element :pc)))
+                      (increment-pc)
                       ;; Return the state
                       state))
                   ;; LDA instruction
@@ -243,7 +244,7 @@
                       ;; Load Acc from Memory
                       (set-element :acc (nth arg (get-element :mem)))
                       ;; Increment the PC
-                      (set-element :pc (increment-pc (get-element :pc)))
+                      (increment-pc)
                       ;; Return the state
                       state))
                   ;; BRA instruction
@@ -261,7 +262,7 @@
                           ;; If conditions satisfied jump
                           (set-element :pc arg)
                           ;; Else increment the PC
-                          (set-element :pc (increment-pc (get-element :pc))))
+                          (increment-pc))
                       ;; Return the state
                       state))
                   ;; BRP instruction
@@ -271,7 +272,7 @@
                           ;; If conditions satisfied jump
                           (set-element :pc arg)
                           ;; Else increment the PC
-                          (set-element :pc (increment-pc (get-element :pc))))
+                          (increment-pc))
                       ;; Return the state
                       state))
                   ;; INP instruction
@@ -287,7 +288,7 @@
                         ;; Remove the first element of input
                         (set-element :in (cdr (get-element :in)))
                         ;; Increment the PC
-                        (set-element :pc (increment-pc (get-element :pc)))
+                        (increment-pc)
                         ;; Return the state
                         state)))
                   ;; OUT instruction
@@ -297,13 +298,14 @@
                         (set-element :out
                           (append (get-element :out) (list (get-element :acc))))
                         ;; Increment the PC
-                        (set-element :pc (increment-pc (get-element :pc)))
+                        (increment-pc)
                         ;; Return the state
                         state))
                   ;; HLT
                   ((= opc 0) (cons 'halted-state (cdr state)))
                   ;; ERROR
-                  (t (format t "RUNTIME ERROR: Instruction not valid.")))))))
+                  (t (format t "RUNTIME ERROR: Instruction ~W not valid."
+                        machine-code)))))))
         ;; Execute instruction pointed by the program counter
         (execute-instruction (nth (get-element :PC) (get-element :MEM)))))))
 
