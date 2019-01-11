@@ -9,7 +9,6 @@ Implementation of "little man computer" by Gianluca Giudice in prolog and common
 
 - **little_man_computer** Entry point for the program
 - **compiler** Compile assembly file
-- **util** Some handy wrappers
 - **executer** Execute the content of the memory
 
 ### Lisp
