@@ -19,8 +19,6 @@ Implementation of "little man computer" by Gianluca Giudice in prolog and common
 ## Notes
 
 - In the lisp implementation, the function "lmc-run" contains *(compile 'execution-loop)* in order to optimize tail recursion and avoid stack overflow
-- A label can be ANYTHING that isn't a number (1label IS a label, 1 is NOT)
-- A label cant't be defined with the same name as any of the instructions
 
 ## Version
 
