@@ -327,7 +327,7 @@
 ;;; Run an assembly file
 (defun lmc-run (filename input)
   (progn
-    ;; Optimization for tail recursion
+    ;; Optimization for tail recursion to avoid stack overflow
     (compile 'execution-loop)
     (execution-loop (list 'state
 			  :acc 0 :pc 0 :mem (lmc-load filename)
