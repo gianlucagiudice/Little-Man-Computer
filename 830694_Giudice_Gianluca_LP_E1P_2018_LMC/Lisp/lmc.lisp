@@ -176,7 +176,7 @@
 	;; Searh all labels defined in asembly file 
 	(let ((labels-list (search-labels line-list 0)))
           ;; Check if labels are defined more than once
-          (when (check-labels labels-list)            
+          (if (check-labels labels-list)            
             ;; Compile each line
             (let ((mem (assembler line-list labels-list)))
               (when (= (length mem) (length line-list))
@@ -184,7 +184,9 @@
                 (format t "Msg: Compiled succesfully.~%")
                 ;; Fill the memory whit 0s
                 (append mem
-			(make-list (- 100 (length mem)) :initial-element '0))))))
+									(make-list (- 100 (length mem)) :initial-element '0))))
+						;; Compile failed
+						nil))
 	;; Memory overflow
 	(format t "COMPILE ERROR: Too many instructions to load in memory.~%"))))
 
@@ -318,17 +320,19 @@
 	(execution-loop (one-instruction state))
 	;; Hatled state reached
 	(progn
-	  (format t "Msg: Execution has been completed.")
-	  (let ((out (nth 10 state)))
-	    ;; Retrun output list or true if empty
-	    (if out out t))))))
+	  (format t "Msg: Execution has been completed.~%")
+	  ;; Retrun output list
+		(nth 10 state)))))
 
 
 ;;; Run an assembly file
 (defun lmc-run (filename input)
-  (progn
-    ;; Optimization for tail recursion to avoid stack overflow
-    (compile 'execution-loop)
-    (execution-loop (list 'state
-			  :acc 0 :pc 0 :mem (lmc-load filename)
-			  :in input :out '() :flag 'noflag))))
+	(let ((mem (lmc-load filename)))
+		;; Run only when compiled successfully
+		(when mem
+  		(progn
+  		  ;; Optimization for tail recursion to avoid stack overflow
+  		  (compile 'execution-loop)
+  		  (execution-loop (list 'state
+					  :acc 0 :pc 0 :mem mem
+					  :in input :out '() :flag 'noflag))))))
