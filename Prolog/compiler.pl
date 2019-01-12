@@ -1,7 +1,5 @@
-/*
-Matr: 830694
-Written by: Gianluca Giudice.
-*/
+%%%% Matr: 830694
+%%%% Written by: Gianluca Giudice.
 
 %%%% -*- Mode: Prolog -*-
 
