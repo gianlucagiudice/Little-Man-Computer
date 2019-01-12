@@ -1,6 +1,6 @@
 # Little Man Computer
 
-Gianluca Giudice 830594
+Gianluca Giudice 830694
 Implementation of "little man computer" by Gianluca Giudice in prolog and common lisp.
 
 ## File structure
