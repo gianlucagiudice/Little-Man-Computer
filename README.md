@@ -1,19 +1,19 @@
 # Little Man Computer
 
 Gianluca Giudice 830694
-Implementation of "little man computer" by Gianluca Giudice in prolog and common lisp.
+Implementation of "little man computer" by Gianluca Giudice in Prolog and Common Lisp.
 
 ## File structure
 
 ### Prolog
 
-- **little_man_computer** Entry point for the program
+- **lmc** Entry point for the program
 - **compiler** Compile assembly file
 - **executer** Execute the content of the memory
 
 ### Lisp
 
-- **little-man-computer** The whole LMC implementation
+- **lmc** The whole LMC implementation
 
 ## Notes
 
