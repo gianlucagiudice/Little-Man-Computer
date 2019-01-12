@@ -74,7 +74,7 @@
 	       ;; Return the label if is alredy defined
 	       (if (resolve-label (defined-label-name label) labels-list)
 		   label
-        (check-recursively (car labels-list) (cdr labels-list))))))
+		   (check-recursively (car labels-list) (cdr labels-list))))))
     (let ((alredy-defined
 	   (check-recursively (car labels-list) (cdr labels-list))))
       (if alredy-defined
@@ -161,32 +161,32 @@
     ;; Compile each instruction
     (when line-list
       (let ((compiled (assembler-line (car line-list))))
-        (if compiled
+	(if compiled
 	    ;; If instruction compiled succesfully continue recursivly
 	    (cons compiled (assembler (cdr line-list) labels-list))
-	    ;; If error occured, compile process fail
+	    ;; If error occuredcompile process fail
 	    (format t "Instruction: ~@(~{~A~^ ~}~).~%" (car line-list)))))))
 
 
-;;; Given a file, return the content of the memory.
+;;; Given a filereturn the content of the memory.
 (defun lmc-load (filename)
   (let ((line-list (read-file filename)))
     ;; Control memeory overflow
     (if (<= (length line-list) 100)
 	;; Searh all labels defined in asembly file 
 	(let ((labels-list (search-labels line-list 0)))
-          ;; Check if labels are defined more than once
-          (if (check-labels labels-list)            
-            ;; Compile each line
-            (let ((mem (assembler line-list labels-list)))
-              (when (= (length mem) (length line-list))
-                ;; Each line has been compiled
-                (format t "Msg: Compiled succesfully.~%")
-                ;; Fill the memory whit 0s
-                (append mem
-									(make-list (- 100 (length mem)) :initial-element '0))))
-						;; Compile failed
-						nil))
+	  ;; Check if labels are defined more than once
+	  (if (check-labels labels-list)            
+	      ;; Compile each line
+	      (let ((mem (assembler line-list labels-list)))
+		(when (= (length mem) (length line-list))
+		  ;; Each line has been compiled
+		  (format t "Msg: Compiled succesfully.~%")
+		  ;; Fill the memory whit 0s
+		  (append mem
+			  (make-list (- 100 (length mem)) :initial-element '0))))
+	      ;; Compile failed
+	      nil))
 	;; Memory overflow
 	(format t "COMPILE ERROR: Too many instructions to load in memory.~%"))))
 
@@ -308,8 +308,8 @@
 		       ;; ERROR
 		       (t (format t "RUNTIME ERROR: Instruction ~W not valid."
 				  machine-code)))))))
-        ;; Execute instruction pointed by the program counter
-        (execute-instruction (nth (get-element :PC) (get-element :MEM)))))))
+	;; Execute instruction pointed by the program counter
+	(execute-instruction (nth (get-element :PC) (get-element :MEM)))))))
 
 
 ;;; Execute until the end
@@ -322,17 +322,17 @@
 	(progn
 	  (format t "Msg: Execution has been completed.~%")
 	  ;; Retrun output list
-		(nth 10 state)))))
+	  (nth 10 state)))))
 
 
 ;;; Run an assembly file
 (defun lmc-run (filename input)
-	(let ((mem (lmc-load filename)))
-		;; Run only when compiled successfully
-		(when mem
-  		(progn
-  		  ;; Optimization for tail recursion to avoid stack overflow
-  		  (compile 'execution-loop)
-  		  (execution-loop (list 'state
-					  :acc 0 :pc 0 :mem mem
-					  :in input :out '() :flag 'noflag))))))
+  (let ((mem (lmc-load filename)))
+    ;; Run only when compiled successfully
+    (when mem
+      (progn
+	;; Optimization for tail recursion to avoid stack overflow
+	(compile 'execution-loop)
+	(execution-loop (list 'state
+			      :acc 0 :pc 0 :mem mem
+			      :in input :out '() :flag 'noflag))))))
