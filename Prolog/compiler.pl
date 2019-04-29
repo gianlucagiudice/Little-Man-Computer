@@ -108,7 +108,6 @@ remove_comment([T | Ts], [T | Rest]) :- remove_comment(Ts, Rest).
 
 
 
-
 %%% assembler_line/3: Convert a single instruction into machine code.
 %% Len = 1
 assembler_line([Instruction], _, MachineCode) :-
