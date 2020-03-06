@@ -4,11 +4,9 @@ Gianluca Giudice 830694
 Implementation of "little man computer" by Gianluca Giudice in Common Lisp.
 
 ## File structure
-
 - **lmc** The whole LMC implementation
 
 ## Notes
-
 - The function "lmc-run" contains *(compile 'execution-loop)* in order to optimize tail recursion and avoid stack overflow
 
 ## Version
