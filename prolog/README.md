@@ -1,4 +1,5 @@
 # Little Man Computer
+## Prolog
 
 Gianluca Giudice 830694
 Implementation of "little man computer" by Gianluca Giudice in Prolog.
